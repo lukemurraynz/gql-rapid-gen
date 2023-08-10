@@ -1,0 +1,1 @@
+# gql-rapid-gen
