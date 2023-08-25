@@ -1,0 +1,12 @@
+
+type Test {
+    One: String
+    Two: Int
+    Three: Float
+    Four: Boolean
+    OneReq: String!
+    TwoReq: Int!
+    ThreeReq: Float!
+    FourReq: Boolean!
+    Loop: Test
+}

@@ -1,0 +1,7 @@
+// {{$.Union.NameTitle}} is a struct representing the graphql Union {{$.Union.NameTitle}}
+type {{$.Union.NameTitle}} struct {
+{{- range $index, $value := $.Members}}
+	{{$value}} {{$value}}
+{{- end}}
+}
+

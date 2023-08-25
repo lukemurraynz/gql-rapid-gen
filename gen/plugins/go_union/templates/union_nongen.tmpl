@@ -1,0 +1,24 @@
+import (
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
+
+func ({{$.Union.NameCamel}} *{{$.Union.NameTitle}}) MarshalJSON() ([]byte, error) {
+	// TODO implement
+	return nil, fmt.Errorf("unimplemented")
+}
+
+func ({{$.Union.NameCamel}} *{{$.Union.NameTitle}}) UnmarshalJSON(data []byte) (err error) {
+	// TODO implement
+	return fmt.Errorf("unimplemented")
+}
+
+func ({{$.Union.NameCamel}} *{{$.Union.NameTitle}}) MarshalDynamoDBAttributeValue() (av types.AttributeValue, err error) {
+	// TODO implement
+	return nil, fmt.Errorf("unimplemented")
+}
+
+func ({{$.Union.NameCamel}} *{{$.Union.NameTitle}}) UnmarshalDynamoDBAttributeValue(types.AttributeValue) (err error) {
+	// TODO implement
+	return fmt.Errorf("unimplemented")
+}

@@ -1,0 +1,63 @@
+
+directive @go_ignore on FIELD_DEFINITION | INPUT_FIELD_DEFINITION | OBJECT | INPUT_OBJECT
+directive @dynamodb(
+    name: String!
+    hash_key: String!
+    sort_key: String
+) on OBJECT
+directive @dynamodb_gsi(
+    name: String!
+    hash_key: String!
+    sort_key: String
+) repeatable on OBJECT
+directive @dynamodb_lsi(
+    name: String!
+    sort_key: String!
+) repeatable on OBJECT
+directive @appsync_crud(
+    create_hash_type: String
+    create_sort_type: String
+    disable_create: Boolean
+    disable_read: Boolean
+    disable_update: Boolean
+    disable_delete: Boolean
+) on OBJECT
+directive @appsync_scan(
+    plural: String!
+) on OBJECT
+directive @appsync_list(
+    plural: String!
+    using: String
+    forward: Boolean!
+    name: String
+) on OBJECT | FIELD_DEFINITION
+directive @appsync_foreign_key(
+    query: Boolean
+    query_single: Boolean
+    batch: Boolean
+    field_source: String
+    field_foreign: String
+    table: String!
+    index: String
+    additional_field_source: String
+    additional_field_foreign: String
+) on FIELD_DEFINITION
+directive @appsync_lambda(
+    language: String!
+    path: String!
+    timeout: String
+    memory: String
+) on FIELD_DEFINITION
+directive @crud_type(
+    render: String # Renderer to use in display / grids / etc
+    input: String # Renderer to use for input boxes
+    non_empty: Boolean # Whether to allow the zero-value (empty string, 0, etc)
+    default: String # Default value on Create
+    help_text: String # Text to display to admin in forms
+    validation_regex: String # Regex for validation before save
+    min: Int # For integer types, minimum value
+    max: Int # For integer types, maximum value
+    readonly: Boolean # Force this attribute to be readonly in the backend - primary hash_key and sort_key are always readonly
+    fkey_resolver: String
+    fkey_name: String
+) on FIELD_DEFINITION

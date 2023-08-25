@@ -1,0 +1,306 @@
+import (
+    "context"
+    "fmt"
+    "sort"
+    "github.com/aws/aws-sdk-go-v2/aws"
+    "github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+    "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
+
+{{$hashField := $.Field $.HashKey}}
+{{$sortField := $.Field $.SortKey}}
+
+type {{$.Object.NameCamel}}Key struct {
+    {{$hashField.VariableName}} {{$hashField.GoType}}
+{{- if $.SortKey }}
+    {{$sortField.VariableName}} {{$sortField.GoType}}
+{{- end }}
+}
+
+type {{$.Object.NameCamel}}Mock struct {
+    data map[{{$.Object.NameCamel}}Key]*{{$.Object.NameTitle}}
+}
+
+func init{{$.Object.NameTitle}}Mock() {
+    {{$.Object.NameCamel}}ProviderSingleton = &{{$.Object.NameCamel}}Mock{
+        data: make(map[{{$.Object.NameCamel}}Key]*{{$.Object.NameTitle}}, 128),
+    }
+}
+
+//Get{{$.Object.NameTitle}} gets a {{$.Object.NameTitle}} from the database
+{{- if $.SortKey}}
+func (p *{{$.Object.NameCamel}}Mock) Get{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}, {{$sortField.VariableName}} {{$sortField.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
+    key := {{$.Object.NameCamel}}Key{
+        {{$hashField.VariableName}}: {{$hashField.VariableName}},
+        {{$sortField.VariableName}}: {{$sortField.VariableName}},
+    }
+{{- else}}
+func (p *{{$.Object.NameCamel}}Mock) Get{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
+    key := {{$.Object.NameCamel}}Key{
+        {{$hashField.VariableName}}: {{$hashField.VariableName}},
+    }
+{{- end}}
+
+    return p.data[key], nil
+}
+
+//Put{{$.Object.NameTitle}} puts a {{$.Object.NameTitle}} into the database
+func (p *{{$.Object.NameCamel}}Mock) Put{{$.Object.NameTitle}}(ctx context.Context, {{$.Object.NameCamel}} *{{$.Object.NameTitle}}) error {
+{{- if $.SortKey}}
+    key := {{$.Object.NameCamel}}Key{
+        {{$hashField.VariableName}}: {{$.Object.NameCamel}}.{{$hashField.GoFieldName}},
+        {{$sortField.VariableName}}: {{$.Object.NameCamel}}.{{$sortField.GoFieldName}},
+    }
+{{- else }}
+    key := {{$.Object.NameCamel}}Key{
+        {{$hashField.VariableName}}: {{$.Object.NameCamel}}.{{$hashField.GoFieldName}},
+    }
+{{- end }}
+
+    if err := {{$.Object.NameCamel}}.Validate(); err != nil {
+        return err
+    }
+
+    p.data[key] = {{$.Object.NameCamel}}
+
+    return nil
+}
+
+// GetPut returns a Put entry for a {{$.Object.NameTitle}}
+func (p *{{$.Object.NameCamel}}Mock) GetPut({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) (put *types.Put, err error) {
+	if err := {{$.Object.NameCamel}}.Validate(); err != nil {
+		return nil, err
+	}
+	item, err := attributevalue.MarshalMap({{$.Object.NameCamel}})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal {{$.Object.NameTitle}}: %v", err)
+	}
+	return &types.Put{
+		TableName: aws.String("{{$.Object.NameTitle}}"),
+		Item:      item,
+	}, nil
+}
+
+//Delete{{$.Object.NameTitle}} deletes a {{$.Object.NameTitle}} from the database
+{{- if $.SortKey}}
+func (p *{{$.Object.NameCamel}}Mock) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}, {{$sortField.VariableName}} {{$sortField.GoType}}) error {
+    key := {{$.Object.NameCamel}}Key{
+        {{$hashField.VariableName}}: {{$hashField.VariableName}},
+        {{$sortField.VariableName}}: {{$sortField.VariableName}},
+    }
+{{- else}}
+func (p *{{$.Object.NameCamel}}Mock) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}) error {
+    key := {{$.Object.NameCamel}}Key{
+        {{$hashField.VariableName}}: {{$hashField.VariableName}},
+    }
+{{- end}}
+
+    delete(p.data, key)
+
+    return nil
+}
+
+//Scan{{$.Object.NameTitle}} scans the {{$.Object.NameTitle}} table
+func (p *{{$.Object.NameCamel}}Mock) Scan{{$.Object.NameTitle}}(ctx context.Context) (ret []*{{$.Object.NameTitle}}, err error) {
+
+    ret = make([]*{{$.Object.NameTitle}}, 0, len(p.data))
+
+    for _, v := range p.data {
+        ret = append(ret, v)
+    }
+
+	sort.Slice(ret, func(i, j int) bool {
+{{- if $.SortKey}}
+		if ret[i].{{$hashField.GoFieldName}} == ret[j].{{$hashField.GoFieldName}} {
+			return ret[i].{{$sortField.GoFieldName}} < ret[j].{{$sortField.GoFieldName}}
+		} else {
+			return ret[i].{{$hashField.GoFieldName}} < ret[j].{{$hashField.GoFieldName}}
+		}
+{{- else }}
+        return ret[i].{{$hashField.GoFieldName}} < ret[j].{{$hashField.GoFieldName}}
+{{- end }}
+	})
+
+    return ret, nil
+}
+
+{{- if $.SortKey}}
+//BatchGet{{$.Object.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database
+func (p *{{$.Object.NameCamel}}Mock) BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []BatchGetInput{{$.Object.NameTitle}}) (ret []*{{$.Object.NameTitle}}, err error) {
+{{- else}}
+//BatchGet{{$.Object.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database
+func (p *{{$.Object.NameCamel}}Mock) BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []{{$hashField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
+{{- end}}
+
+    ret = make([]*{{$.Object.NameTitle}}, 0, len(rows))
+
+    for _, row := range rows {
+        {{- if $.SortKey}}
+            key := {{$.Object.NameCamel}}Key{
+                {{$hashField.VariableName}}: row.{{$hashField.GoFieldName}},
+                {{$sortField.VariableName}}: row.{{$sortField.GoFieldName}},
+            }
+        {{- else}}
+            key := {{$.Object.NameCamel}}Key{
+                {{$hashField.VariableName}}: row,
+            }
+        {{- end}}
+
+        val, ok := p.data[key]
+        if ok {
+            ret = append(ret, val)
+        }
+    }
+    return ret, nil
+}
+
+{{- if $.SortKey}}
+func (p *{{$.Object.NameCamel}}Mock) BatchGet{{$.Object.NameTitle}}By{{$hashField.GoFieldName}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}, rows []{{$sortField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    ret = make([]*{{$.Object.NameTitle}}, 0, len(rows))
+
+    for _, row := range rows {
+        key := {{$.Object.NameCamel}}Key{
+            {{$hashField.VariableName}}: {{$hashField.VariableName}},
+            {{$sortField.VariableName}}: row,
+        }
+
+        val, ok := p.data[key]
+        if ok {
+            ret = append(ret, val)
+        }
+    }
+    return ret, nil
+}
+{{- end }}
+
+{{- if $.SortKey}}
+//List{{$.Object.NameTitle}} gets a list of {{$.Object.NameTitle}} from the database using the hash key
+func (p *{{$.Object.NameCamel}}Mock) List{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+
+    ret = make([]*{{$.Object.NameTitle}}, 0)
+
+    for k, v := range p.data {
+        if k.{{$hashField.VariableName}} == {{$hashField.VariableName}} {
+            ret = append(ret, v)
+        }
+    }
+
+    sort.Slice(ret, func(i, j int) bool {
+        return ret[i].{{$sortField.GoFieldName}} < ret[j].{{$sortField.GoFieldName}}
+	})
+
+    return ret, nil
+}
+{{- end}}
+
+{{-  if $.GSIs }}
+    {{-  range $gsi := $.GSIs }}
+    {{$gsiHashField := $.Field $gsi.HashKey}}
+    {{$gsiSortField := $.Field $gsi.SortKey}}
+{{-  if and ($gsi.SortKey) (ne $gsi.HashKey $gsi.Name) }}
+
+//List{{$.Object.NameTitle}}By{{$gsi.GoName}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
+func (p *{{$.Object.NameCamel}}Mock) List{{$.Object.NameTitle}}By{{$gsi.GoName}}(ctx context.Context, {{$gsiHashField.VariableName}} {{$gsiHashField.GoTypeRequired}}, {{$gsiSortField.VariableName}} {{$gsiSortField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    ret = make([]*{{$.Object.NameTitle}}, 0)
+
+    for _, v := range p.data {
+    {{- if and (not $gsiHashField.Required) (not $gsiSortField.Required) }}
+        if v.{{$gsiHashField.GoFieldName}} != nil && *v.{{$gsiHashField.GoFieldName}} == {{$gsiHashField.VariableName}} && v.{{$gsiSortField.GoFieldName}} != nil && *v.{{$gsiSortField.GoFieldName}} == {{$gsiSortField.VariableName}} {
+    {{- else if not $gsiHashField.Required }}
+        if v.{{$gsiHashField.GoFieldName}} != nil && *v.{{$gsiHashField.GoFieldName}} == {{$gsiHashField.VariableName}} && v.{{$gsiSortField.GoFieldName}} == {{$gsiSortField.VariableName}} {
+    {{- else if not $gsiSortField.Required }}
+        if v.{{$gsiHashField.GoFieldName}} == {{$gsiHashField.VariableName}} && v.{{$gsiSortField.GoFieldName}} != nil && *v.{{$gsiSortField.GoFieldName}} == {{$gsiSortField.VariableName}} {
+    {{- else }}
+        if v.{{$gsiHashField.GoFieldName}} == {{$gsiHashField.VariableName}} && v.{{$gsiSortField.GoFieldName}} == {{$gsiSortField.VariableName}} {
+    {{- end }}
+            ret = append(ret, v)
+        }
+    }
+
+    	sort.Slice(ret, func(i, j int) bool {
+    {{- if and (not $gsiHashField.Required) (not $gsiSortField.Required) }}
+		if *ret[i].{{$gsiHashField.GoFieldName}} == *ret[j].{{$gsiHashField.GoFieldName}} {
+			return *ret[i].{{$gsiSortField.GoFieldName}} < *ret[j].{{$gsiSortField.GoFieldName}}
+		} else {
+			return *ret[i].{{$gsiHashField.GoFieldName}} < *ret[j].{{$gsiHashField.GoFieldName}}
+		}
+    {{- else if not $gsiHashField.Required }}
+        if *ret[i].{{$gsiHashField.GoFieldName}} == *ret[j].{{$gsiHashField.GoFieldName}} {
+            return ret[i].{{$gsiSortField.GoFieldName}} < ret[j].{{$gsiSortField.GoFieldName}}
+        } else {
+            return *ret[i].{{$gsiHashField.GoFieldName}} < *ret[j].{{$gsiHashField.GoFieldName}}
+        }
+    {{- else if not $gsiSortField.Required }}
+        if ret[i].{{$gsiHashField.GoFieldName}} == ret[j].{{$gsiHashField.GoFieldName}} {
+			return *ret[i].{{$gsiSortField.GoFieldName}} < *ret[j].{{$gsiSortField.GoFieldName}}
+		} else {
+			return ret[i].{{$gsiHashField.GoFieldName}} < ret[j].{{$gsiHashField.GoFieldName}}
+		}
+    {{- else }}
+        if ret[i].{{$gsiHashField.GoFieldName}} == ret[j].{{$gsiHashField.GoFieldName}} {
+			return ret[i].{{$gsiSortField.GoFieldName}} < ret[j].{{$gsiSortField.GoFieldName}}
+		} else {
+			return ret[i].{{$gsiHashField.GoFieldName}} < ret[j].{{$gsiHashField.GoFieldName}}
+		}
+    {{- end }}
+	})
+
+    return ret, nil
+}
+
+{{- end}}
+
+//List{{$.Object.NameTitle}}By{{$gsiHashField.GoFieldName}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
+func (p *{{$.Object.NameCamel}}Mock) List{{$.Object.NameTitle}}By{{$gsiHashField.GoFieldName}}(ctx context.Context, {{$gsiHashField.VariableName}} {{$gsiHashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    ret = make([]*{{$.Object.NameTitle}}, 0)
+
+    for _, v := range p.data {
+    {{- if not $gsiHashField.Required }}
+        if v.{{$gsiHashField.GoFieldName}} != nil && *v.{{$gsiHashField.GoFieldName}} == {{$gsiHashField.VariableName}} {
+    {{- else }}
+        if v.{{$gsiHashField.GoFieldName}} == {{$gsiHashField.VariableName}} {
+    {{- end }}
+            ret = append(ret, v)
+        }
+    }
+
+    sort.Slice(ret, func(i, j int) bool {
+    {{- if $gsi.SortKey }}
+        {{- if and (not $gsiHashField.Required) (not $gsiSortField.Required) }}
+            if *ret[i].{{$gsiHashField.GoFieldName}} == *ret[j].{{$gsiHashField.GoFieldName}} {
+                return *ret[i].{{$gsiSortField.GoFieldName}} < *ret[j].{{$gsiSortField.GoFieldName}}
+            } else {
+                return *ret[i].{{$gsiHashField.GoFieldName}} < *ret[j].{{$gsiHashField.GoFieldName}}
+            }
+        {{- else if not $gsiHashField.Required }}
+            if *ret[i].{{$gsiHashField.GoFieldName}} == *ret[j].{{$gsiHashField.GoFieldName}} {
+                return ret[i].{{$gsiSortField.GoFieldName}} < ret[j].{{$gsiSortField.GoFieldName}}
+            } else {
+                return *ret[i].{{$gsiHashField.GoFieldName}} < *ret[j].{{$gsiHashField.GoFieldName}}
+            }
+        {{- else if not $gsiSortField.Required }}
+            if ret[i].{{$gsiHashField.GoFieldName}} == ret[j].{{$gsiHashField.GoFieldName}} {
+                return *ret[i].{{$gsiSortField.GoFieldName}} < *ret[j].{{$gsiSortField.GoFieldName}}
+            } else {
+                return ret[i].{{$gsiHashField.GoFieldName}} < ret[j].{{$gsiHashField.GoFieldName}}
+            }
+        {{- else }}
+            if ret[i].{{$gsiHashField.GoFieldName}} == ret[j].{{$gsiHashField.GoFieldName}} {
+                return ret[i].{{$gsiSortField.GoFieldName}} < ret[j].{{$gsiSortField.GoFieldName}}
+            } else {
+                return ret[i].{{$gsiHashField.GoFieldName}} < ret[j].{{$gsiHashField.GoFieldName}}
+            }
+        {{- end }}
+    {{- else }}
+        {{- if not $gsiHashField.Required }}
+            return *ret[i].{{$gsiHashField.GoFieldName}} < *ret[j].{{$gsiHashField.GoFieldName}}
+        {{- else }}
+            return ret[i].{{$gsiHashField.GoFieldName}} < ret[j].{{$gsiHashField.GoFieldName}}
+        {{- end }}
+    {{- end }}
+	})
+
+    return ret, nil
+}
+{{- end}}
+{{- end}}

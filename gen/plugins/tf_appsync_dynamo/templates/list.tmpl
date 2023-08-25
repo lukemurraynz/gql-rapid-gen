@@ -1,0 +1,30 @@
+
+resource "aws_appsync_resolver" "Query-{{$.query_name}}" {
+  api_id      = aws_appsync_graphql_api.backend.id
+  type        = "Query"
+  field       = "{{$.query_name}}"
+  data_source = aws_appsync_datasource.{{$.base.dynamo.name}}.name
+
+  request_template = <<EOF
+{
+    "version": "2017-02-28",
+    "operation": "Query",
+    "query": {
+        "expression": "{{$.field}} = :v",
+        "expressionValues": {
+          ":v": $util.dynamodb.toDynamoDBJson($ctx.args.{{$.field}})
+        }
+    },
+    "scanIndexForward" : {{$.list.forward}},
+    "limit": $util.defaultIfNull($${ctx.args.limit}, 20),
+    "nextToken": $util.toJson($util.defaultIfNullOrBlank($ctx.args.nextToken, null)),
+{{- if $.list.using}}
+    "index": "{{$.list.using}}",
+{{- end}}
+}
+EOF
+
+  response_template = <<EOF
+$util.toJson($ctx.result)
+EOF
+}

@@ -1,0 +1,512 @@
+import (
+    "context"
+    "fmt"
+    "github.com/aws/aws-sdk-go-v2/aws"
+    "github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+    "github.com/aws/aws-sdk-go-v2/service/dynamodb"
+    "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+    "lib/config"
+)
+
+{{$hashField := $.Field $.HashKey}}
+{{$sortField := $.Field $.SortKey}}
+
+// {{$.Object.NameTitle}} is a struct representing the graphql object {{$.Object.NameTitle}} with DynamoDB handlers
+type {{$.Object.NameTitle}} struct {
+{{- range $index, $field := $.Fields}}
+    {{$field.GoFieldName}} {{$field.GoType}} {{$field.Tag}}
+{{- end}}
+}
+
+type {{$.Object.NameCamel}}ProviderBase interface {
+
+{{- if $.SortKey}}
+    Get{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}, {{$sortField.VariableName}} {{$sortField.GoType}}) (ret *{{$.Object.NameTitle}}, err error)
+{{- else}}
+    Get{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}) (ret *{{$.Object.NameTitle}}, err error)
+{{- end}}
+    Put{{$.Object.NameTitle}}(ctx context.Context, {{$.Object.NameCamel}} *{{$.Object.NameTitle}}) error
+    GetPut({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) (put *types.Put, err error)
+{{- if $.SortKey}}
+    Delete{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}, {{$sortField.VariableName}} {{$sortField.GoType}}) error
+{{- else}}
+    Delete{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}) error
+{{- end}}
+    Scan{{$.Object.NameTitle}}(ctx context.Context) (ret []*{{$.Object.NameTitle}}, err error)
+{{- if $.SortKey}}
+    BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []BatchGetInput{{$.Object.NameTitle}}) (ret []*{{$.Object.NameTitle}}, err error)
+    BatchGet{{$.Object.NameTitle}}By{{$hashField.GoFieldName}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}, rows []{{$sortField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error)
+{{- else}}
+    BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []{{$hashField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error)
+{{- end}}
+{{- if $.SortKey}}
+    List{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error)
+{{- end}}
+{{-  if $.GSIs }}
+    {{-  range $gsi := $.GSIs }}
+        {{$gsiHashField := $.Field $gsi.HashKey}}
+        {{$gsiSortField := $.Field $gsi.SortKey}}
+        {{-  if and ($gsi.SortKey) (ne $gsi.HashKey $gsi.Name) }}
+            List{{$.Object.NameTitle}}By{{$gsi.GoName}}(ctx context.Context, {{$gsiHashField.VariableName}} {{$gsiHashField.GoTypeRequired}}, {{$gsiSortField.VariableName}} {{$gsiSortField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error)
+        {{- end}}
+        List{{$.Object.NameTitle}}By{{$gsiHashField.GoFieldName}}(ctx context.Context, {{$gsiHashField.VariableName}} {{$gsiHashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error)
+    {{- end}}
+{{- end}}
+}
+
+type {{$.Object.NameTitle}}Impl struct {
+    db *dynamodb.Client
+}
+
+var {{$.Object.NameCamel}}ProviderSingleton {{$.Object.NameTitle}}Provider
+
+func init{{$.Object.NameTitle}}Provider(db *dynamodb.Client) {
+    {{$.Object.NameCamel}}ProviderSingleton = &{{$.Object.NameTitle}}Impl{
+        db: db,
+    }
+}
+
+func Get{{$.Object.NameTitle}}Provider() {{$.Object.NameTitle}}Provider {
+    return {{$.Object.NameCamel}}ProviderSingleton
+}
+
+var {{$.Object.NameCamel}}ExtraValidator func(*{{$.Object.NameTitle}}) error
+
+//Validate validates the {{$.Object.NameTitle}} struct
+func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) Validate() error {
+    {{- range $index, $field := $.Fields}}
+        {{- if or (eq $field.Name $.HashKey) (eq $field.Name $sortField.Name)}}
+            {{- if eq $field.DynamoType "S"}}
+            if {{$.Object.NameCamel}}.{{$field.GoFieldName}} == "" {
+            {{- else if eq $field.DynamoType "N"}}
+            if {{$.Object.NameCamel}}.{{$field.GoFieldName}} == 0 {
+            {{- end}}
+                return fmt.Errorf("key field {{$.Object.NameTitle}}.{{$field.Name}} is required")
+            }
+        {{- end}}
+        {{- if and $field.Collection $field.IsCollectionOfObjects}}
+            {{if eq $field.Required false }}
+            if {{$.Object.NameCamel}}.{{$field.GoFieldName}} != nil && len({{$.Object.NameCamel}}.{{$field.GoFieldName}}) != 0 {
+                for _, item := range {{$.Object.NameCamel}}.{{$field.GoFieldName}} {
+                    if err := item.Validate(); err != nil {
+                        return err
+                    }
+                }
+            }
+            {{else}}
+            if len({{$.Object.NameCamel}}.{{$field.GoFieldName}}) != 0 {
+                for _, item := range {{$.Object.NameCamel}}.{{$field.GoFieldName}} {
+                    if err := item.Validate(); err != nil {
+                        return err
+                    }
+                }
+            }
+            {{end}}
+        {{- end}}
+    {{- end}}
+
+    if {{$.Object.NameCamel}}ExtraValidator != nil {
+        return {{$.Object.NameCamel}}ExtraValidator({{$.Object.NameCamel}})
+    }
+    return nil
+}
+
+func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) key() map[string]types.AttributeValue {
+    return map[string]types.AttributeValue{
+        "{{$.HashKey}}": &types.AttributeValueMember{{$hashField.DynamoType}} {
+            {{- if eq $hashField.DynamoType "S"}}
+            Value: {{$.Object.NameCamel}}.{{$hashField.GoFieldName}},
+            {{- else}}
+            Value: fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$hashField.GoFieldName}}),
+            {{- end}}
+        },
+        {{- if $.SortKey}}
+        "{{$.SortKey}}": &types.AttributeValueMember{{$sortField.DynamoType}} {
+            {{- if eq $sortField.DynamoType "S"}}
+                Value: {{$.Object.NameCamel}}.{{$sortField.GoFieldName}},
+            {{- else}}
+                Value: fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$sortField.GoFieldName}}),
+            {{- end}}
+        },
+        {{end}}
+    }
+}
+
+func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) GetMapID() string {
+{{- if $.SortKey }}
+    {{- if eq $sortField.DynamoType "S"}}
+    return {{$.Object.NameCamel}}.{{$sortField.GoFieldName}}
+    {{- else }}
+    return fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$sortField.GoFieldName}})
+    {{- end }}
+{{- else }}
+    {{- if eq $hashField.DynamoType "S"}}
+        return {{$.Object.NameCamel}}.{{$hashField.GoFieldName}}
+    {{- else }}
+        return fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$hashField.GoFieldName}})
+    {{- end }}
+{{- end }}
+}
+
+func (p *{{$.Object.NameTitle}}Impl) tableName() *string {
+    return aws.String("{{$.TableName}}-" + config.Env)
+}
+
+//Get{{$.Object.NameTitle}} gets a {{$.Object.NameTitle}} from the database
+{{- if $.SortKey}}
+func (p *{{$.Object.NameTitle}}Impl) Get{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}, {{$sortField.VariableName}} {{$sortField.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
+{{- else}}
+func (p *{{$.Object.NameTitle}}Impl) Get{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
+{{- end}}
+    result, err := p.db.GetItem(ctx, &dynamodb.GetItemInput{
+        TableName: p.tableName(),
+        Key: map[string]types.AttributeValue{
+            "{{$.HashKey}}": &types.AttributeValueMember{{$hashField.DynamoType}} {
+                {{- if eq $hashField.DynamoType "S"}}
+                Value: {{$hashField.VariableName}},
+                {{- else}}
+                Value: fmt.Sprintf("%d", {{$hashField.VariableName}}),
+                {{- end}}
+            },
+            {{- if $.SortKey}}
+            "{{$.SortKey}}": &types.AttributeValueMember{{$sortField.DynamoType}} {
+                {{- if eq $sortField.DynamoType "S"}}
+                    Value: {{$sortField.VariableName}},
+                {{- else}}
+                    Value: fmt.Sprintf("%d", {{$sortField.VariableName}}),
+                {{- end}}
+            },
+            {{end}}
+        },
+    })
+    if err != nil {
+        return nil, fmt.Errorf("failed to get {{$.Object.NameTitle}} from table with id %s: %v", {{$hashField.VariableName}}, err)
+    }
+    ret = &{{$.Object.NameTitle}}{}
+
+    err = attributevalue.UnmarshalMap(result.Item, ret)
+    if err != nil {
+        return nil, fmt.Errorf("failed to unmarshal {{$.Object.NameTitle}} from table with id %s: %v", {{$hashField.VariableName}}, err)
+    }
+    return ret, nil
+}
+
+//Put{{$.Object.NameTitle}} puts a {{$.Object.NameTitle}} into the database
+func (p *{{$.Object.NameTitle}}Impl) Put{{$.Object.NameTitle}}(ctx context.Context, {{$.Object.NameCamel}} *{{$.Object.NameTitle}}) error {
+    if err := {{$.Object.NameCamel}}.Validate(); err != nil {
+        return err
+    }
+    item, err := attributevalue.MarshalMap({{$.Object.NameCamel}})
+    if err != nil {
+        return fmt.Errorf("failed to marshal {{$.Object.NameTitle}}: %v", err)
+    }
+    _, err = p.db.PutItem(ctx, &dynamodb.PutItemInput{
+        TableName: p.tableName(),
+        Item:      item,
+    })
+    if err != nil {
+        return fmt.Errorf("failed to put {{$.Object.NameTitle}} into table: %v", err)
+    }
+    return nil
+}
+
+// GetPut returns a Put entry for a {{$.Object.NameTitle}}
+func (p *{{$.Object.NameTitle}}Impl) GetPut({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) (put *types.Put, err error) {
+	if err := {{$.Object.NameCamel}}.Validate(); err != nil {
+		return nil, err
+	}
+	item, err := attributevalue.MarshalMap({{$.Object.NameCamel}})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal {{$.Object.NameTitle}}: %v", err)
+	}
+	return &types.Put{
+		TableName: p.tableName(),
+		Item:      item,
+	}, nil
+}
+
+//Delete{{$.Object.NameTitle}} deletes a {{$.Object.NameTitle}} from the database
+{{- if $.SortKey}}
+func (p *{{$.Object.NameTitle}}Impl) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}, {{$sortField.VariableName}} {{$sortField.GoType}}) error {
+{{- else}}
+func (p *{{$.Object.NameTitle}}Impl) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}) error {
+{{- end}}
+    _, err := p.db.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+        TableName: p.tableName(),
+        Key: map[string]types.AttributeValue{
+            "{{$.HashKey}}": &types.AttributeValueMember{{$hashField.DynamoType}} {
+            {{- if eq $hashField.DynamoType "S"}}
+                Value: {{$hashField.VariableName}},
+            {{- else}}
+                Value: fmt.Sprintf("%d", {{$hashField.VariableName}}),
+            {{- end}}
+            },
+            {{- if $.SortKey}}
+                "{{$.SortKey}}": &types.AttributeValueMember{{$sortField.DynamoType}} {
+                {{- if eq $sortField.DynamoType "S"}}
+                    Value: {{$sortField.VariableName}},
+                {{- else}}
+                    Value: fmt.Sprintf("%d", {{$sortField.VariableName}}),
+                {{- end}}
+                },
+            {{end}}
+        },
+    })
+    if err != nil {
+        return fmt.Errorf("failed to delete {{$.Object.NameTitle}} from table with id %s: %v", {{$hashField.VariableName}}, err)
+    }
+    return nil
+}
+
+//Scan{{$.Object.NameTitle}} scans the {{$.Object.NameTitle}} table
+func (p *{{$.Object.NameTitle}}Impl) Scan{{$.Object.NameTitle}}(ctx context.Context) (ret []*{{$.Object.NameTitle}}, err error) {
+    var lastEvaluatedKey map[string]types.AttributeValue
+    for {
+        scanResp, err := p.db.Scan(ctx, &dynamodb.ScanInput{
+            TableName: p.tableName(),
+            ExclusiveStartKey: lastEvaluatedKey,
+        })
+        if err != nil {
+            return nil, fmt.Errorf("failed to scan Activity table: %v", err)
+        }
+        temp := make([]*{{$.Object.NameTitle}}, 0, len(scanResp.Items))
+        err = attributevalue.UnmarshalListOfMaps(scanResp.Items, &temp)
+        if err != nil {
+            return nil, fmt.Errorf("failed to unmarshal {{$.Object.NameTitle}} table: %v", err)
+        }
+        ret = append(ret, temp...)
+        if scanResp.LastEvaluatedKey == nil {
+            break
+        } else {
+            lastEvaluatedKey = scanResp.LastEvaluatedKey
+        }
+    }
+    return ret, nil
+}
+
+{{- if $.SortKey}}
+//BatchGetInput{{$.Object.NameTitle}} represents the keys to fetch {{$.Object.NameTitle}} from the database
+type BatchGetInput{{$.Object.NameTitle}} struct {
+    {{$hashField.GoFieldName}} {{$hashField.GoType}}
+    {{$sortField.GoFieldName}} {{$sortField.GoType}}
+}
+
+//BatchGet{{$.Object.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database
+func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []BatchGetInput{{$.Object.NameTitle}}) (ret []*{{$.Object.NameTitle}}, err error) {
+{{- else}}
+//BatchGet{{$.Object.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database
+func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []{{$hashField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
+{{- end}}
+    keys := make([]map[string]types.AttributeValue, 0, len(rows))
+    for _, val := range rows {
+        keys = append(keys, map[string]types.AttributeValue{
+            {{- if $.SortKey}}
+            "{{$.HashKey}}": &types.AttributeValueMember{{$hashField.DynamoType}} {
+                {{- if eq $hashField.DynamoType "S"}}
+                    Value: val.{{$hashField.GoFieldName}},
+                {{- else}}
+                    Value: fmt.Sprintf("%d", val.{{$hashField.GoFieldName}}),
+                {{- end}}
+            },
+            "{{$.SortKey}}": &types.AttributeValueMember{{$sortField.DynamoType}} {
+                {{- if eq $sortField.DynamoType "S"}}
+                    Value: val.{{$sortField.GoFieldName}},
+                {{- else}}
+                    Value: fmt.Sprintf("%d", val.{{$sortField.GoFieldName}}),
+                {{- end}}
+            },
+            {{- else}}
+            "{{$.HashKey}}": &types.AttributeValueMember{{$hashField.DynamoType}} {
+                Value: val,
+            },
+            {{- end}}
+        })
+    }
+    result, err := p.db.BatchGetItem(ctx, &dynamodb.BatchGetItemInput{
+        RequestItems: map[string]types.KeysAndAttributes{
+            *p.tableName(): {
+                Keys: keys,
+            },
+        },
+    })
+    if err != nil {
+        return nil, fmt.Errorf("failed to batch get {{$.Object.NameTitle}} from table: %v", err)
+    }
+    ret = make([]*{{$.Object.NameTitle}}, 0, len(result.Responses[*p.tableName()]))
+    err = attributevalue.UnmarshalListOfMaps(result.Responses[*p.tableName()], &ret)
+    if err != nil {
+        return nil, fmt.Errorf("failed to unmarshal from table: %v", err)
+    }
+    return ret, nil
+}
+
+{{- if $.SortKey}}
+//BatchGet{{$.Object.NameTitle}}By{{$hashField.GoFieldName}} retrieves multiple {{$.Object.NameTitle}} from the database with a common {{$hashField.GoFieldName}}
+func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}By{{$hashField.GoFieldName}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoType}}, rows []{{$sortField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    keys := make([]map[string]types.AttributeValue, 0, len(rows))
+    for _, val := range rows {
+        keys = append(keys, map[string]types.AttributeValue{
+            "{{$.HashKey}}": &types.AttributeValueMember{{$hashField.DynamoType}} {
+                {{- if eq $hashField.DynamoType "S"}}
+                    Value: {{$hashField.VariableName}},
+                {{- else}}
+                    Value: fmt.Sprintf("%d", {{$hashField.VariableName}}),
+                {{- end}}
+            },
+            "{{$.SortKey}}": &types.AttributeValueMember{{$sortField.DynamoType}} {
+                {{- if eq $sortField.DynamoType "S"}}
+                    Value: val,
+                {{- else}}
+                    Value: fmt.Sprintf("%d", val),
+                {{- end}}
+            },
+        })
+    }
+    result, err := p.db.BatchGetItem(ctx, &dynamodb.BatchGetItemInput{
+        RequestItems: map[string]types.KeysAndAttributes{
+            *p.tableName(): {
+                Keys: keys,
+            },
+        },
+    })
+    if err != nil {
+        return nil, fmt.Errorf("failed to batch get {{$.Object.NameTitle}} from table: %v", err)
+    }
+    ret = make([]*{{$.Object.NameTitle}}, 0, len(result.Responses[*p.tableName()]))
+    err = attributevalue.UnmarshalListOfMaps(result.Responses[*p.tableName()], &ret)
+    if err != nil {
+        return nil, fmt.Errorf("failed to unmarshal from table: %v", err)
+    }
+    return ret, nil
+}
+{{- end }}
+
+{{- if $.SortKey}}
+//List{{$.Object.NameTitle}} gets a list of {{$.Object.NameTitle}} from the database using the hash key
+func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}(ctx context.Context, {{$hashField.VariableName}} {{$hashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    var lastEvaluatedKey map[string]types.AttributeValue
+    for {
+        resp, err := p.db.Query(ctx, &dynamodb.QueryInput{
+            TableName: p.tableName(),
+            KeyConditions: map[string]types.Condition{
+                "{{$hashField.Name}}": {
+                    ComparisonOperator: types.ComparisonOperatorEq,
+                    AttributeValueList: []types.AttributeValue{
+                        &types.AttributeValueMember{{$hashField.DynamoType}}{
+                            Value: {{$hashField.VariableName}},
+                        },
+                    },
+                },
+            },
+            ExclusiveStartKey: lastEvaluatedKey,
+        })
+        if err != nil {
+            return nil, fmt.Errorf("failed to query {{$.Object.NameTitle}} table by hash: %v", err)
+        }
+        temp := make([]*{{$.Object.NameTitle}}, 0, len(resp.Items))
+        err = attributevalue.UnmarshalListOfMaps(resp.Items, &temp)
+        if err != nil {
+            return nil, fmt.Errorf("failed to unmarshal {{$.Object.NameTitle}} table: %v", err)
+        }
+        ret = append(ret, temp...)
+        if resp.LastEvaluatedKey == nil {
+            break
+        } else {
+            lastEvaluatedKey = resp.LastEvaluatedKey
+        }
+    }
+    return ret, nil
+}
+{{- end}}
+
+{{-  if $.GSIs }}
+    {{-  range $gsi := $.GSIs }}
+    {{$gsiHashField := $.Field $gsi.HashKey}}
+    {{$gsiSortField := $.Field $gsi.SortKey}}
+{{-  if and ($gsi.SortKey) (ne $gsi.HashKey $gsi.Name) }}
+
+//List{{$.Object.NameTitle}}By{{$gsi.GoName}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
+func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}By{{$gsi.GoName}}(ctx context.Context, {{$gsiHashField.VariableName}} {{$gsiHashField.GoTypeRequired}}, {{$gsiSortField.VariableName}} {{$gsiSortField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    var lastEvaluatedKey map[string]types.AttributeValue
+    for {
+        resp, err := p.db.Query(ctx, &dynamodb.QueryInput{
+            TableName: p.tableName(),
+            IndexName: aws.String("{{$gsi.Name}}"),
+            KeyConditions: map[string]types.Condition{
+                "{{$gsiHashField.Name}}": {
+                    ComparisonOperator: types.ComparisonOperatorEq,
+                    AttributeValueList: []types.AttributeValue{
+                        &types.AttributeValueMember{{$gsiHashField.DynamoType}}{
+                            Value: {{$gsiHashField.VariableName}},
+                        },
+                    },
+                },
+                "{{$gsiSortField.Name}}": {
+                    ComparisonOperator: types.ComparisonOperatorEq,
+                    AttributeValueList: []types.AttributeValue{
+                        &types.AttributeValueMember{{$gsiSortField.DynamoType}}{
+                            Value: {{$gsiSortField.VariableName}},
+                        },
+                    },
+                },
+            },
+            ExclusiveStartKey: lastEvaluatedKey,
+        })
+        if err != nil {
+            return nil, fmt.Errorf("failed to query {{$.Object.NameTitle}} table via {{$gsi.Name}} complete: %v", err)
+        }
+        temp := make([]*{{$.Object.NameTitle}}, 0, len(resp.Items))
+        err = attributevalue.UnmarshalListOfMaps(resp.Items, &temp)
+        if err != nil {
+            return nil, fmt.Errorf("failed to unmarshal {{$.Object.NameTitle}} table: %v", err)
+        }
+        ret = append(ret, temp...)
+        if resp.LastEvaluatedKey == nil {
+            break
+        } else {
+            lastEvaluatedKey = resp.LastEvaluatedKey
+        }
+    }
+    return ret, nil
+}
+
+{{- end}}
+
+//List{{$.Object.NameTitle}}By{{$gsiHashField.GoFieldName}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
+func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}By{{$gsiHashField.GoFieldName}}(ctx context.Context, {{$gsiHashField.VariableName}} {{$gsiHashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    var lastEvaluatedKey map[string]types.AttributeValue
+    for {
+        resp, err := p.db.Query(ctx, &dynamodb.QueryInput{
+            TableName: p.tableName(),
+            IndexName: aws.String("{{$gsi.Name}}"),
+            KeyConditions: map[string]types.Condition{
+                "{{$gsiHashField.Name}}": {
+                    ComparisonOperator: types.ComparisonOperatorEq,
+                    AttributeValueList: []types.AttributeValue{
+                        &types.AttributeValueMember{{$gsiHashField.DynamoType}}{
+                            Value: {{$gsiHashField.VariableName}},
+                        },
+                    },
+                },
+            },
+            ExclusiveStartKey: lastEvaluatedKey,
+        })
+        if err != nil {
+            return nil, fmt.Errorf("failed to query {{$.Object.NameTitle}} table via {{$gsi.Name}} complete: %v", err)
+        }
+        temp := make([]*{{$.Object.NameTitle}}, 0, len(resp.Items))
+        err = attributevalue.UnmarshalListOfMaps(resp.Items, &temp)
+        if err != nil {
+            return nil, fmt.Errorf("failed to unmarshal {{$.Object.NameTitle}} table: %v", err)
+        }
+        ret = append(ret, temp...)
+        if resp.LastEvaluatedKey == nil {
+            break
+        } else {
+            lastEvaluatedKey = resp.LastEvaluatedKey
+        }
+    }
+    return ret, nil
+}
+{{- end}}
+{{- end}}

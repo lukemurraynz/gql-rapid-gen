@@ -1,0 +1,116 @@
+
+resource "aws_appsync_resolver" "{{$.base.object}}-{{$.field}}" {
+  api_id      = aws_appsync_graphql_api.backend.id
+  type        = "{{$.base.object}}"
+  field       = "{{$.field}}"
+  data_source = aws_appsync_datasource.{{$.fkey.table}}.name
+
+{{- if $.fkey.query }}
+  request_template = <<EOF
+{
+    "version": "2017-02-28",
+    "operation": "Query",
+
+    "query": {
+{{- if not $.fkey.additional_field_source }}
+        "expression": "{{$.fkey.field_foreign}} = :v",
+        "expressionValues": {
+{{- if and (eq $.fkey.table "user") (eq $.fkey.field_foreign "email") }}
+          ":v": $util.dynamodb.toDynamoDBJson($util.str.toLower($context.source.{{$.fkey.field_source}}))
+{{- else }}
+          ":v": $util.dynamodb.toDynamoDBJson($context.source.{{$.fkey.field_source}})
+{{- end }}
+        }
+{{- else }}
+        "expression": "{{$.fkey.field_foreign}} = :v AND {{$.fkey.additional_field_foreign}} = :a",
+        "expressionValues": {
+          ":v": $util.dynamodb.toDynamoDBJson($context.source.{{$.fkey.field_source}}),
+          ":a": $util.dynamodb.toDynamoDBJson($context.source.{{$.fkey.additional_field_source}})
+        }
+{{- end }}
+    },
+{{- if $.fkey.index }}
+    "index": "{{$.fkey.index}}",
+{{- end }}
+}
+EOF
+{{- else if $.fkey.batch }}
+  request_template = <<EOF
+#if(!$context.source.{{$.fkey.field_source}} || $context.source.{{$.fkey.field_source}}.size() == 0)
+    #return([])
+#else
+#set($ids = [])
+#foreach($id in $${context.source.{{$.fkey.field_source}}})
+    #set($map = {})
+    $util.qr($map.put("{{$.fkey.field_foreign}}", $util.dynamodb.toString($id)))
+    $util.qr($ids.add($map))
+#end
+{
+    "version": "2018-05-29",
+    "operation": "BatchGetItem",
+    "tables" : {
+        "${aws_appsync_datasource.{{$.fkey.table}}.dynamodb_config[0].table_name}": {
+            "keys": $util.toJson($ids),
+            "consistentRead": true
+        }
+    }
+}
+#end
+EOF
+{{- else }}
+  request_template = <<EOF
+{{- if eq $.fkey.table "user" }}
+#if($util.str.toLower($context.source.{{$.fkey.field_source}}) == $util.str.toLower($context.identity.claims.email) || $ctx.identity.claims["cognito:groups"].contains("Admins") || $ctx.identity.claims["cognito:groups"].contains("Registration") || $ctx.identity.claims["cognito:groups"].contains("Security"))
+{{- end }}
+{
+    "version": "2017-02-28",
+    "operation": "GetItem",
+    "key": {
+{{- if and (eq $.fkey.table "user") (eq $.fkey.field_foreign "email") }}
+        "{{$.fkey.field_foreign}}": $util.dynamodb.toDynamoDBJson($util.str.toLower($context.source.{{$.fkey.field_source}})),
+{{- else }}
+        "{{$.fkey.field_foreign}}": $util.dynamodb.toDynamoDBJson($context.source.{{$.fkey.field_source}}),
+{{- end }}
+{{- if $.fkey.additional_field_source }}
+        "{{$.fkey.additional_field_foreign}}": $util.dynamodb.toDynamoDBJson($context.source.{{$.fkey.additional_field_source}}),
+{{- end }}
+    },
+{{- if $.fkey.index }}
+    "index": "{{$.fkey.index}}",
+{{- end }}
+}
+{{- if eq $.fkey.table "user" }}
+#else
+  $utils.unauthorized()
+#end
+{{- end }}
+EOF
+{{- end }}
+
+  response_template = <<EOF
+{{- if $.fkey.query_single }}
+#if($ctx.result.items && $ctx.result.items.size() == 1)
+    $util.toJson($ctx.result.items[0])
+#elif($ctx.result.items && $ctx.result.items.size() > 1)
+    $util.error("too many results returned")
+    #return
+#else
+    #return
+#end
+{{- else if $.fkey.query }}
+$util.toJson($ctx.result.items)
+{{- else if $.fkey.batch }}
+$util.toJson($ctx.result.data["${aws_appsync_datasource.{{$.fkey.table}}.dynamodb_config[0].table_name}"])
+{{- else }}
+{{- if eq $.fkey.table "order" }}
+#if(($ctx.result.user_emails_associated && $ctx.result.user_emails_associated.contains($util.str.toLower($context.identity.claims.email))) || $ctx.identity.claims["cognito:groups"].contains("Admins") || $ctx.identity.claims["cognito:groups"].contains("Registration"))
+$util.toJson($ctx.result)
+#else
+$utils.unauthorized()
+#end
+{{- else }}
+$util.toJson($ctx.result)
+{{- end }}
+{{- end }}
+EOF
+}

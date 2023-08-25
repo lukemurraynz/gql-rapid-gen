@@ -1,0 +1,23 @@
+import (
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+)
+
+type MultiTableProvider interface {
+
+}
+
+type multiTableImpl struct {
+	db *dynamodb.Client
+}
+
+var multiTableProviderSingleton MultiTableProvider
+
+func initMultiTableProvider(db *dynamodb.Client) {
+	multiTableProviderSingleton = &multiTableImpl{
+		db: db,
+	}
+}
+
+func GetMultiTableProvider() MultiTableProvider {
+	return multiTableProviderSingleton
+}
