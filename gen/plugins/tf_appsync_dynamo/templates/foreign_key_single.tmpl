@@ -1,0 +1,39 @@
+
+resource "aws_appsync_resolver" "{{$.Object.Name}}-{{$.Field.Name}}" {
+  api_id      = aws_appsync_graphql_api.backend.id
+  type        = "{{$.Object.Name}}"
+  field       = "{{$.Field.Name}}"
+  data_source = aws_appsync_datasource.{{$.Table}}.name
+
+  request_template = <<EOF
+{{- if eq $.Table "user" }}
+#if($util.str.toLower($context.source.{{$.FieldSource}}) == $util.str.toLower($context.identity.claims.email) || $ctx.identity.claims["cognito:groups"].contains("Admins"))
+{{- end }}
+{
+    "version": "2017-02-28",
+    "operation": "GetItem",
+    "key": {
+{{- if and (eq $.Table "user") (eq $.FieldForeign "email") }}
+        "{{$.FieldForeign}}": $util.dynamodb.toDynamoDBJson($util.str.toLower($context.source.{{$.FieldSource}})),
+{{- else }}
+        "{{$.FieldForeign}}": $util.dynamodb.toDynamoDBJson($context.source.{{$.FieldSource}}),
+{{- end }}
+{{- if $.AdditionalFieldSource }}
+        "{{$.AdditionalFieldForeign}}": $util.dynamodb.toDynamoDBJson($context.source.{{$.AdditionalFieldSource}}),
+{{- end }}
+    },
+{{- if $.Index }}
+    "index": "{{$.Index}}",
+{{- end }}
+}
+{{- if eq $.Table "user" }}
+#else
+  $utils.unauthorized()
+#end
+{{- end }}
+EOF
+
+  response_template = <<EOF
+$util.toJson($ctx.result)
+EOF
+}

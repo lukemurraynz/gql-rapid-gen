@@ -1,0 +1,9 @@
+
+type T2
+@dynamodb(name: "n", hash_key: "id")
+@dynamodb_gsi(hash_key: "a", name: "a", sort_key: "b")
+@dynamodb_gsi(hash_key: "b", name: "b", sort_key: "a")
+{
+    F1: String
+    F2: String
+}

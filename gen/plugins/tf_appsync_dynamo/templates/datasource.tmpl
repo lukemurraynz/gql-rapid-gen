@@ -1,0 +1,15 @@
+
+resource "aws_appsync_datasource" "{{$.Object.NameDash}}" {
+  name             = "{{$.Object.NameDash}}_${terraform.workspace}"
+  api_id           = aws_appsync_graphql_api.backend.id
+  service_role_arn = aws_iam_role.appsync-dynamo-{{$.Object.NameDash}}.arn
+  type             = "AMAZON_DYNAMODB"
+
+  dynamodb_config {
+    table_name = aws_dynamodb_table.{{$.Object.NameDash}}.name
+  }
+
+  lifecycle {
+    ignore_changes = [name]
+  }
+}

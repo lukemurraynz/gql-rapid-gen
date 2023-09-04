@@ -1,0 +1,24 @@
+
+resource "aws_appsync_resolver" "Query-get{{$.Object.NameTitle}}" {
+  api_id      = aws_appsync_graphql_api.backend.id
+  type        = "Query"
+  field       = "get{{$.Object.NameTitle}}"
+  data_source = aws_appsync_datasource.{{$.Object.NameDash}}.name
+
+  request_template = <<EOF
+{
+    "version": "2017-02-28",
+    "operation": "GetItem",
+    "key": {
+        "{{$.HashKey.Name}}": $util.dynamodb.toDynamoDBJson($ctx.args.{{$.HashKey.Name}}),
+{{- if $.HasSort}}
+        "{{$.SortKey.Name}}": $util.dynamodb.toDynamoDBJson($ctx.args.{{$.SortKey.Name}}),
+{{- end}}
+    }
+}
+EOF
+
+  response_template = <<EOF
+$util.toJson($ctx.result)
+EOF
+}

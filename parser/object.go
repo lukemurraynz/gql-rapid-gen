@@ -3,13 +3,14 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/mjdrgn/gql-rapid-gen/util"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 type ParsedObject struct {
 	Name        string
-	Directives  map[string]*ParsedDirective
+	Directives  map[string][]*ParsedDirective
 	Description string
 	Fields      []*ParsedField
 	Interfaces  []string
@@ -32,12 +33,29 @@ func (po *ParsedObject) NameDash() string {
 }
 
 func (po *ParsedObject) Field(key string) *ParsedField {
+	if key == "" {
+		return nil
+	}
 	for _, f := range po.Fields {
 		if f.Name == key {
 			return f
 		}
 	}
 	return nil
+}
+
+func (po *ParsedObject) SingleDirective(key string) *ParsedDirective {
+	v, ok := po.Directives[key]
+	if !ok {
+		return nil
+	}
+	if len(v) == 0 {
+		panic(fmt.Errorf("'%s' had '%s' directive found but len 0", po.Name, key))
+	}
+	if len(v) > 1 {
+		panic(fmt.Errorf("object '%s' had duplicate '%s' directives", po.Name, key))
+	}
+	return v[0]
 }
 
 func (po *ParsedObject) HasDirective(key string) bool {

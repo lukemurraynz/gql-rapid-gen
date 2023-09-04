@@ -1,0 +1,47 @@
+
+resource "aws_appsync_resolver" "{{$.Object.Name}}-{{$.Field.Name}}" {
+  api_id      = aws_appsync_graphql_api.backend.id
+  type        = "{{$.Object.Name}}"
+  field       = "{{$.Field.Name}}"
+  data_source = aws_appsync_datasource.{{$.Table}}.name
+
+  request_template = <<EOF
+{
+    "version": "2017-02-28",
+    "operation": "Query",
+
+    "query": {
+{{- if not $.AdditionalFieldSource }}
+        "expression": "{{$.FieldForeign}} = :v",
+        "expressionValues": {
+{{- if and (eq ($.Table "user") (eq $.FieldForeign "email")) }}
+          ":v": $util.dynamodb.toDynamoDBJson($util.str.toLower($context.source.{{$.FieldSource}}))
+{{- else }}
+          ":v": $util.dynamodb.toDynamoDBJson($context.source.{{$.FieldSource}})
+{{- end }}
+        }
+{{- else }}
+        "expression": "{{$.FieldForeign}} = :v AND {{$.AdditionalFieldForeign}} = :a",
+        "expressionValues": {
+          ":v": $util.dynamodb.toDynamoDBJson($context.source.{{$.FieldSource}}),
+          ":a": $util.dynamodb.toDynamoDBJson($context.source.{{$.AdditionalFieldSource}})
+        }
+{{- end }}
+    },
+{{- if $.Index }}
+    "index": "{{$.Index}}",
+{{- end }}
+}
+EOF
+
+  response_template = <<EOF
+#if($ctx.result.items && $ctx.result.items.size() == 1)
+    $util.toJson($ctx.result.items[0])
+#elif($ctx.result.items && $ctx.result.items.size() > 1)
+    $util.error("too many results returned")
+    #return
+#else
+    #return
+#end
+EOF
+}

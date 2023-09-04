@@ -10,7 +10,7 @@ import (
 
 type ParsedField struct {
 	Name        string
-	Directives  map[string]*ParsedDirective
+	Directives  map[string][]*ParsedDirective
 	Description string
 	Arguments   map[string]*ParsedArgumentDef
 	Type        *FieldType

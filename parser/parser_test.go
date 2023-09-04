@@ -61,3 +61,17 @@ func Test_Parse_Types(t *testing.T) {
 	assert.False(t, three.Type.Required)
 	assert.False(t, four.Type.Required)
 }
+
+func Test_Parse_RepeatedDirectives(t *testing.T) {
+	files := []string{"testdata/dir_repeat.graphql"}
+
+	output, err := Parse(files)
+
+	require.Nilf(t, err, "Parse returned error: %s", err)
+
+	require.NotNil(t, output.Objects)
+	require.NotNil(t, output.Objects["T2"])
+	obj := output.Objects["T2"]
+	require.True(t, obj.HasDirective("dynamodb"))
+	require.True(t, obj.HasDirective("dynamodb_gsi"))
+}

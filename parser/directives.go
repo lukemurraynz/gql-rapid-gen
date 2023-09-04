@@ -18,6 +18,27 @@ func (pd *ParsedDirective) ArgIsNull(key string) bool {
 	return ok
 }
 
+func (pd *ParsedDirective) HasArg(key string) bool {
+	_, ok := pd.Arguments[key]
+	return ok
+}
+
+func (pd *ParsedDirective) Arg(key string) string {
+	arg, ok := pd.Arguments[key]
+	if !ok {
+		return ""
+	}
+	return arg.Value.String()
+}
+
+func (pd *ParsedDirective) ArgBool(key string) bool {
+	arg, ok := pd.Arguments[key]
+	if !ok {
+		return false
+	}
+	return arg.Value.String() == "true"
+}
+
 func (pd *ParsedDirective) ArgGo(key string) string {
 	arg, ok := pd.Arguments[key]
 	if !ok {
@@ -49,13 +70,13 @@ func parseDirective(d *ast.Directive) *ParsedDirective {
 	}
 }
 
-func parseDirectives(ds ast.DirectiveList) (ret map[string]*ParsedDirective) {
+func parseDirectives(ds ast.DirectiveList) (ret map[string][]*ParsedDirective) {
 	if ds == nil {
 		return nil
 	}
-	ret = make(map[string]*ParsedDirective, len(ds))
+	ret = make(map[string][]*ParsedDirective, len(ds))
 	for _, d := range ds {
-		ret[d.Name] = parseDirective(d)
+		ret[d.Name] = append(ret[d.Name], parseDirective(d))
 	}
 	return ret
 }

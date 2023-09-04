@@ -1,6 +1,6 @@
 // Copyright (c) 2023 under the MIT license per gql-rapid-gen/LICENSE.MD
 
-package tf_dynamodb
+package tf_appsync_dynamo
 
 import "github.com/mjdrgn/gql-rapid-gen/parser"
 
