@@ -1,8 +1,5 @@
-/*
-Package cmd contains all the CLI commands.
+// Copyright (c) 2023 under the MIT license per gql-rapid-gen/LICENSE.MD
 
-Copyright © 2023 Matt Johnston <mattj@emazestudios.com>
-*/
 package cmd
 
 import (

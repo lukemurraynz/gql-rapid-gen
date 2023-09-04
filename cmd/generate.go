@@ -1,6 +1,5 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
+// Copyright (c) 2023 under the MIT license per gql-rapid-gen/LICENSE.MD
+
 package cmd
 
 import (
