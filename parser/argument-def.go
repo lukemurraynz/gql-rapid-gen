@@ -3,6 +3,7 @@
 package parser
 
 import (
+	"github.com/mjdrgn/gql-rapid-gen/util"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -10,6 +11,22 @@ type ParsedArgumentDef struct {
 	Name    string
 	Type    *FieldType
 	Default Value
+}
+
+func (pad *ParsedArgumentDef) NameTitle() string {
+	return util.TitleCase(pad.Name)
+}
+
+func (pad *ParsedArgumentDef) NameCamel() string {
+	return util.CamelCase(pad.Name)
+}
+
+func (pad *ParsedArgumentDef) NameUnder() string {
+	return util.UnderCase(pad.Name)
+}
+
+func (pad *ParsedArgumentDef) NameDash() string {
+	return util.DashCase(pad.Name)
 }
 
 func parseArgumentDef(v *ast.ArgumentDefinition) *ParsedArgumentDef {

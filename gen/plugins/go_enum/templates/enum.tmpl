@@ -5,13 +5,13 @@ type {{$.Enum.NameTitle}} string
 
 const (
 {{range $index, $value := $.Values}}
-	{{$.Enum.NameTitle}}{{$value}} {{$.Enum.NameTitle}} = "{{$value}}"
+	{{$.Enum.NameTitle}}_{{$value}} {{$.Enum.NameTitle}} = "{{$value}}"
 {{end}}
 )
 
 //Validate validates the {{$.Enum.NameTitle}} struct
 func ({{$.Enum.NameCamel}} {{$.Enum.NameTitle}}) Validate() error {
-	{{range $index, $value := $.Values}}
+	{{range $index, $value := $.Enum.Values}}
 		if {{$.Enum.NameCamel}} == "{{$value}}" {
 			return nil
 		}

@@ -13,6 +13,7 @@ type OutputFile struct {
 	header          string
 	content         []string
 	generateIfEmpty bool
+	overwrite       bool
 }
 
 func (of *OutputFile) Add(text string) {

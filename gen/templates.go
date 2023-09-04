@@ -28,7 +28,6 @@ func init() {
 		if path == "" || (d != nil && d.IsDir()) {
 			return nil
 		}
-		log.Printf("Loading template: %s", path)
 		rawTemplate, err := fs.ReadFile(templateFiles, path)
 		if err != nil {
 			return fmt.Errorf("failed loading %s: %w", path, err)

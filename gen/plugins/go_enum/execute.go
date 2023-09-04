@@ -1,6 +1,6 @@
 // Copyright (c) 2023 under the MIT license per gql-rapid-gen/LICENSE.MD
 
-package go_objects
+package go_enum
 
 import (
 	"fmt"
@@ -10,27 +10,22 @@ import (
 )
 
 type data struct {
-	Object *parser.ParsedObject
-	Input  bool
+	Enum *parser.ParsedEnum
 }
 
 func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 
-	for _, o := range schema.Objects {
-		if !o.HasDirective("dynamodb") {
-
-		}
-		rendered, err := gen.ExecuteTemplate("plugins/tf_dynamodb/templates/ddb.tmpl", data{
-			Object: o,
-			Input:  false,
+	for _, o := range schema.Enums {
+		rendered, err := gen.ExecuteTemplate("plugins/go_objects/templates/enum.tmpl", data{
+			Enum: o,
 		})
 		if err != nil {
-			return fmt.Errorf("failed rendering Object %s: %w", o.Name, err)
+			return fmt.Errorf("failed rendering Enum %s: %w", o.Name, err)
 		}
 
 		_, err = output.AppendOrCreate(gen.GO_DATA_GEN, util.DashCase(o.Name), rendered)
 		if err != nil {
-			return fmt.Errorf("failed appending Object %s: %w", o.Name, err)
+			return fmt.Errorf("failed appending Enum %s: %w", o.Name, err)
 		}
 	}
 

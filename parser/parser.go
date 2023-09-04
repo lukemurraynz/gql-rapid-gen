@@ -14,6 +14,7 @@ type Schema struct {
 	Objects      map[string]*ParsedObject
 	InputObjects map[string]*ParsedObject
 	Enums        map[string]*ParsedEnum
+	Unions       map[string]*ParsedUnion
 
 	Query        map[string]*ParsedField
 	Mutation     map[string]*ParsedField

@@ -1,0 +1,59 @@
+import "fmt"
+
+// {{$.Field.NameTitle}} is a struct representing the Lambda event received for {{$.Parent}}.{{$.Field.Name}}
+type {{$.Field.NameTitle}}Event struct {
+	Arguments {{$.Field.NameTitle}}Arguments `json:"arguments"`
+	Identity  RequestIdentity       `json:"identity"`
+}
+
+// {{$.Field.NameTitle}} is a type representing the Lambda event return value for {{$.Parent}}.{{$.Field.Name}}
+type {{$.Field.NameTitle}}Return {{$.Field.Type.GoType}}
+
+type {{$.Field.NameTitle}}Arguments struct {
+	{{- range $index, $field := $.Field.Arguments}}
+		{{$field.NameTitle}} {{$field.Type.GoType}} {{$field.Tag}}
+	{{- end}}
+}
+
+//Validate validates the {{$.Field.NameTitle}} struct
+func ({{$.Field.NameCamel}} *{{$.Field.NameTitle}}Arguments) Validate() error {
+	if {{$.Field.NameCamel}} == nil {
+		return fmt.Errorf("{{$.Field.NameTitle}} must not be nil")
+	}
+	{{- range $index, $field := $.Field.Arguments}}
+		{{- if and $field.Collection $field.IsCollectionOfObjects}}
+			{{if eq $field.Required false }}
+				if {{$.Field.NameCamel}}.{{$field.NameTitle}} != nil && len(*{{$.Field.NameCamel}}.{{$field.NameTitle}}) != 0 {
+					for _, item := range *{{$.Field.NameCamel}}.{{$field.NameTitle}} {
+						if err := item.Validate(); err != nil {
+							return err
+						}
+					}
+				}
+			{{else}}
+				if len({{$.Field.NameCamel}}.{{$field.NameTitle}}) != 0 {
+					for _, item := range {{$.Field.NameCamel}}.{{$field.NameTitle}} {
+						if err := item.Validate(); err != nil {
+							return err
+						}
+					}
+				}
+			{{end}}
+		{{- else }}
+			{{- if eq $field.Required true }}
+				{{- if or (eq $field.Type.Kind "String") (eq $field.Type.Kind "ID") }}
+					if {{$.Field.NameCamel}}.{{$field.NameTitle}} == "" {
+						return fmt.Errorf("field {{$field.Name}} is required")
+					}
+				{{- else if or (eq $field.Type.Kind "Int") (eq $field.Type.Kind "Float") }}
+					if {{$.Field.NameCamel}}.{{$field.NameTitle}} == 0 {
+						return fmt.Errorf("field {{$field.Name}} is required")
+					}
+				{{- else }}
+					// WARNING: Cannot validate required field {{$field.NameTitle}}
+				{{- end }}
+			{{- end}}
+		{{- end}}
+	{{- end}}
+	return nil
+}

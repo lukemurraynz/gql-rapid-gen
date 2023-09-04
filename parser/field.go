@@ -32,6 +32,11 @@ func (pf *ParsedField) NameDash() string {
 	return util.DashCase(pf.Name)
 }
 
+func (pf *ParsedField) HasDirective(key string) bool {
+	_, ok := pf.Directives[key]
+	return ok
+}
+
 func (pf *ParsedField) GoStructTag() string {
 	entries := make([]string, 0, 16)
 	if !pf.Type.Required {

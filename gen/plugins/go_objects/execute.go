@@ -25,7 +25,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 			return fmt.Errorf("failed rendering Object %s: %w", o.Name, err)
 		}
 
-		_, err = output.AppendOrCreate(gen.GO_GEN, util.DashCase(o.Name), rendered)
+		_, err = output.AppendOrCreate(gen.GO_DATA_GEN, util.DashCase(o.Name), rendered)
 		if err != nil {
 			return fmt.Errorf("failed appending Object %s: %w", o.Name, err)
 		}
@@ -40,7 +40,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 			return fmt.Errorf("failed rendering Input Object %s: %w", o.Name, err)
 		}
 
-		_, err = output.AppendOrCreate(gen.GO_GEN, util.DashCase(o.Name), rendered)
+		_, err = output.AppendOrCreate(gen.GO_DATA_GEN, util.DashCase(o.Name), rendered)
 		if err != nil {
 			return fmt.Errorf("failed appending Input Object %s: %w", o.Name, err)
 		}

@@ -4,6 +4,7 @@ package gen
 
 import (
 	"errors"
+	"fmt"
 	"github.com/mjdrgn/gql-rapid-gen/parser"
 	"golang.org/x/exp/slices"
 	"log"
@@ -17,8 +18,20 @@ func RegisterPlugin(name string, p Plugin) {
 	if pres {
 		panic("Double registration of Plugin: " + name)
 	}
+	if p.Name() != name {
+		panic(fmt.Sprintf("Name mismatch in Plugin: %s vs %s", p.Name(), name))
+	}
 	plugins[name] = p
 	log.Printf("Plugin Registered: %s", name)
+}
+
+// ListPlugins returns the names of all plugins registered
+func ListPlugins() []string {
+	ret := make([]string, 0, len(plugins))
+	for k, _ := range plugins {
+		ret = append(ret, k)
+	}
+	return ret
 }
 
 // QualifySchema runs all registered Plugin entities against a given Schema and returns those that qualify
