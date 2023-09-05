@@ -1,7 +1,7 @@
 
 
-resource "aws_iam_role" "appsync-lambda-{{$.Object}}-{{$.Field}}" {
-  name = "appsync-lambda-{{$.Object}}-{{$.Field}}-${terraform.workspace}"
+resource "aws_iam_role" "appsync-lambda-{{$.Parent}}-{{$.Field.Name}}" {
+  name = "appsync-lambda-{{$.Parent}}-{{$.Field.Name}}-${terraform.workspace}"
 
   assume_role_policy = <<EOF
 {
@@ -19,9 +19,9 @@ resource "aws_iam_role" "appsync-lambda-{{$.Object}}-{{$.Field}}" {
 EOF
 }
 
-resource "aws_iam_role_policy" "appsync-lambda-{{$.Object}}-{{$.Field}}" {
-  name = "appsync-lambda-{{$.Object}}-{{$.Field}}-${terraform.workspace}"
-  role = aws_iam_role.appsync-lambda-{{$.Object}}-{{$.Field}}.id
+resource "aws_iam_role_policy" "appsync-lambda-{{$.Parent}}-{{$.Field.Name}}" {
+  name = "appsync-lambda-{{$.Parent}}-{{$.Field.Name}}-${terraform.workspace}"
+  role = aws_iam_role.appsync-lambda-{{$.Parent}}-{{$.Field.Name}}.id
 
   policy = <<EOF
 {
@@ -33,7 +33,7 @@ resource "aws_iam_role_policy" "appsync-lambda-{{$.Object}}-{{$.Field}}" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "${aws_lambda_function.{{$.Object}}-{{$.Field}}.arn}"
+        "${aws_lambda_function.{{$.Parent}}-{{$.Field.Name}}.arn}"
       ]
     }
   ]
@@ -41,8 +41,8 @@ resource "aws_iam_role_policy" "appsync-lambda-{{$.Object}}-{{$.Field}}" {
 EOF
 }
 
-resource "aws_iam_role" "lambda-{{$.Object}}-{{$.Field}}" {
-  name = "lambda-{{$.Object}}-{{$.Field}}-${terraform.workspace}"
+resource "aws_iam_role" "lambda-{{$.Parent}}-{{$.Field.Name}}" {
+  name = "lambda-{{$.Parent}}-{{$.Field.Name}}-${terraform.workspace}"
 
   assume_role_policy = <<EOF
 {
@@ -61,70 +61,70 @@ resource "aws_iam_role" "lambda-{{$.Object}}-{{$.Field}}" {
 EOF
 }
 
-resource "aws_iam_policy" "lambda-{{$.Object}}-{{$.Field}}" {
-  name = "lambda-{{$.Object}}-{{$.Field}}-${terraform.workspace}"
+resource "aws_iam_policy" "lambda-{{$.Parent}}-{{$.Field.Name}}" {
+  name = "lambda-{{$.Parent}}-{{$.Field.Name}}-${terraform.workspace}"
   path = "/"
 
-  policy = data.aws_iam_policy_document.lambda-{{$.Object}}-{{$.Field}}.json
+  policy = data.aws_iam_policy_document.lambda-{{$.Parent}}-{{$.Field.Name}}.json
 }
 
-resource "aws_iam_role_policy_attachment" "lambda-{{$.Object}}-{{$.Field}}" {
-  policy_arn = aws_iam_policy.lambda-{{$.Object}}-{{$.Field}}.arn
-  role       = aws_iam_role.lambda-{{$.Object}}-{{$.Field}}.name
+resource "aws_iam_role_policy_attachment" "lambda-{{$.Parent}}-{{$.Field.Name}}" {
+  policy_arn = aws_iam_policy.lambda-{{$.Parent}}-{{$.Field.Name}}.arn
+  role       = aws_iam_role.lambda-{{$.Parent}}-{{$.Field.Name}}.name
 }
 
-resource "aws_iam_role_policy_attachment" "lambda-{{$.Object}}-{{$.Field}}-basic" {
+resource "aws_iam_role_policy_attachment" "lambda-{{$.Parent}}-{{$.Field.Name}}-basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.lambda-{{$.Object}}-{{$.Field}}.name
+  role       = aws_iam_role.lambda-{{$.Parent}}-{{$.Field.Name}}.name
 }
 
-data "archive_file" "lambda-{{$.Object}}-{{$.Field}}-source" {
+data "archive_file" "lambda-{{$.Parent}}-{{$.Field.Name}}-source" {
   type        = "zip"
-  output_path = "${path.module}/lambda_functions/build/src/{{$.Path}}.zip"
-  source_dir  = "${path.module}/lambda_functions/{{$.Path}}/"
+  output_path = "${path.module}/lambda_functions/build/src/{{$.Directive.Arg "path"}}.zip"
+  source_dir  = "${path.module}/lambda_functions/{{$.Directive.Arg "path"}}/"
 }
 
-resource "null_resource" "lambda-{{$.Object}}-{{$.Field}}-compile" {
+resource "null_resource" "lambda-{{$.Parent}}-{{$.Field.Name}}-compile" {
   triggers = {
-    source_hash = data.archive_file.lambda-{{$.Object}}-{{$.Field}}-source.output_base64sha256
+    source_hash = data.archive_file.lambda-{{$.Parent}}-{{$.Field.Name}}-source.output_base64sha256
     lib_hash = data.archive_file.lambda-lib-source.output_base64sha256
     always_run = timestamp()
   }
 
   provisioner "local-exec" {
-    working_dir = "${path.module}/lambda_functions/{{$.Path}}/"
+    working_dir = "${path.module}/lambda_functions/{{$.Directive.Arg "path"}}/"
     environment = {
       GOOS    = "linux"
       GOARCH  = "arm64"
       GOFLAGS = "-trimpath"
     }
-    command = "go build -ldflags \"-X lib/config.Env=${terraform.workspace}\" -o ../build/${terraform.workspace}/{{$.Path}}/bootstrap -trimpath ."
+    command = "go build -ldflags \"-X lib/config.Env=${terraform.workspace}\" -o ../build/${terraform.workspace}/{{$.Directive.Arg "path"}}/bootstrap -trimpath ."
   }
 }
 
-data "archive_file" "lambda-{{$.Object}}-{{$.Field}}" {
+data "archive_file" "lambda-{{$.Parent}}-{{$.Field.Name}}" {
   type        = "zip"
-  output_path = "${path.module}/lambda_functions/{{$.Path}}_${terraform.workspace}.zip"
-  source_file = "${path.module}/lambda_functions/build/${terraform.workspace}/{{$.Path}}/bootstrap"
+  output_path = "${path.module}/lambda_functions/{{$.Directive.Arg "path"}}_${terraform.workspace}.zip"
+  source_file = "${path.module}/lambda_functions/build/${terraform.workspace}/{{$.Directive.Arg "path"}}/bootstrap"
 
   depends_on = [
-    null_resource.lambda-{{$.Object}}-{{$.Field}}-compile
+    null_resource.lambda-{{$.Parent}}-{{$.Field.Name}}-compile
   ]
 }
 
-resource "aws_lambda_function" "{{$.Object}}-{{$.Field}}" {
-  function_name = "{{$.Object}}_{{$.Field}}_${terraform.workspace}"
-  role          = aws_iam_role.lambda-{{$.Object}}-{{$.Field}}.arn
+resource "aws_lambda_function" "{{$.Parent}}-{{$.Field.Name}}" {
+  function_name = "{{$.Parent}}_{{$.Field.Name}}_${terraform.workspace}"
+  role          = aws_iam_role.lambda-{{$.Parent}}-{{$.Field.Name}}.arn
 
   runtime       = "provided.al2"
   architectures = ["arm64"]
-  timeout       = {{$.Timeout}}
-  memory_size   = {{$.Memory}}
+  timeout       = {{$.Directive.ArgHCL "timeout"}}
+  memory_size   = {{$.Directive.ArgHCL "memory"}}
 
-  handler = "{{$.Field}}"
+  handler = "{{$.Field.Name}}"
 
-  filename         = data.archive_file.lambda-{{$.Object}}-{{$.Field}}.output_path
-  source_code_hash = data.archive_file.lambda-{{$.Object}}-{{$.Field}}.output_base64sha256
+  filename         = data.archive_file.lambda-{{$.Parent}}-{{$.Field.Name}}.output_path
+  source_code_hash = data.archive_file.lambda-{{$.Parent}}-{{$.Field.Name}}.output_base64sha256
 
   environment {
     variables = {
@@ -134,22 +134,22 @@ resource "aws_lambda_function" "{{$.Object}}-{{$.Field}}" {
   }
 }
 
-resource "aws_appsync_datasource" "{{$.Field}}" {
+resource "aws_appsync_datasource" "{{$.Field.Name}}" {
   api_id           = aws_appsync_graphql_api.backend.id
-  name             = "{{$.Field}}_${terraform.workspace}"
-  service_role_arn = aws_iam_role.appsync-lambda-{{$.Object}}-{{$.Field}}.arn
+  name             = "{{$.Field.Name}}_${terraform.workspace}"
+  service_role_arn = aws_iam_role.appsync-lambda-{{$.Parent}}-{{$.Field.Name}}.arn
   type             = "AWS_LAMBDA"
 
   lambda_config {
-    function_arn = aws_lambda_function.{{$.Object}}-{{$.Field}}.arn
+    function_arn = aws_lambda_function.{{$.Parent}}-{{$.Field.Name}}.arn
   }
 }
 
-resource "aws_appsync_resolver" "{{$.Object}}-{{$.Field}}" {
+resource "aws_appsync_resolver" "{{$.Parent}}-{{$.Field.Name}}" {
   api_id      = aws_appsync_graphql_api.backend.id
-  type        = "{{$.Object}}"
-  field       = "{{$.Field}}"
-  data_source = aws_appsync_datasource.{{$.Field}}.name
+  type        = "{{$.Parent}}"
+  field       = "{{$.Field.Name}}"
+  data_source = aws_appsync_datasource.{{$.Field.Name}}.name
 
   request_template = <<EOF
 {

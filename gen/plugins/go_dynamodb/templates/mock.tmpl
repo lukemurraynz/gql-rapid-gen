@@ -1,0 +1,301 @@
+import (
+    "context"
+    "fmt"
+    "sort"
+    "github.com/aws/aws-sdk-go-v2/aws"
+    "github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+    "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
+
+type {{$.Object.NameCamel}}Key struct {
+    {{$.HashField.NameCamel}} {{$.HashField.GoType}}
+{{- if $.HasSort }}
+    {{$.SortField.NameCamel}} {{$.SortField.GoType}}
+{{- end }}
+}
+
+type {{$.Object.NameCamel}}Mock struct {
+    data map[{{$.Object.NameCamel}}Key]*{{$.Object.NameTitle}}
+}
+
+func init{{$.Object.NameTitle}}Mock() {
+    {{$.Object.NameCamel}}ProviderSingleton = &{{$.Object.NameCamel}}Mock{
+        data: make(map[{{$.Object.NameCamel}}Key]*{{$.Object.NameTitle}}, 128),
+    }
+}
+
+//Get{{$.Object.NameTitle}} gets a {{$.Object.NameTitle}} from the database
+{{- if $.HasSort}}
+func (p *{{$.Object.NameCamel}}Mock) Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}, {{$.SortField.NameCamel}} {{$.SortField.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
+    key := {{$.Object.NameCamel}}Key{
+        {{$.HashField.NameCamel}}: {{$.HashField.NameCamel}},
+        {{$.SortField.NameCamel}}: {{$.SortField.NameCamel}},
+    }
+{{- else}}
+func (p *{{$.Object.NameCamel}}Mock) Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
+    key := {{$.Object.NameCamel}}Key{
+        {{$.HashField.NameCamel}}: {{$.HashField.NameCamel}},
+    }
+{{- end}}
+
+    return p.data[key], nil
+}
+
+//Put{{$.Object.NameTitle}} puts a {{$.Object.NameTitle}} into the database
+func (p *{{$.Object.NameCamel}}Mock) Put{{$.Object.NameTitle}}(ctx context.Context, {{$.Object.NameCamel}} *{{$.Object.NameTitle}}) error {
+{{- if $.HasSort}}
+    key := {{$.Object.NameCamel}}Key{
+        {{$.HashField.NameCamel}}: {{$.Object.NameCamel}}.{{$.HashField.NameTitle}},
+        {{$.SortField.NameCamel}}: {{$.Object.NameCamel}}.{{$.SortField.NameTitle}},
+    }
+{{- else }}
+    key := {{$.Object.NameCamel}}Key{
+        {{$.HashField.NameCamel}}: {{$.Object.NameCamel}}.{{$.HashField.NameTitle}},
+    }
+{{- end }}
+
+    if err := {{$.Object.NameCamel}}.Validate(); err != nil {
+        return err
+    }
+
+    p.data[key] = {{$.Object.NameCamel}}
+
+    return nil
+}
+
+// GetPut returns a Put entry for a {{$.Object.NameTitle}}
+func (p *{{$.Object.NameCamel}}Mock) GetPut({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) (put *types.Put, err error) {
+	if err := {{$.Object.NameCamel}}.Validate(); err != nil {
+		return nil, err
+	}
+	item, err := attributevalue.MarshalMap({{$.Object.NameCamel}})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal {{$.Object.NameTitle}}: %v", err)
+	}
+	return &types.Put{
+		TableName: aws.String("{{$.Object.NameTitle}}"),
+		Item:      item,
+	}, nil
+}
+
+//Delete{{$.Object.NameTitle}} deletes a {{$.Object.NameTitle}} from the database
+{{- if $.HasSort}}
+func (p *{{$.Object.NameCamel}}Mock) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}, {{$.SortField.NameCamel}} {{$.SortField.GoType}}) error {
+    key := {{$.Object.NameCamel}}Key{
+        {{$.HashField.NameCamel}}: {{$.HashField.NameCamel}},
+        {{$.SortField.NameCamel}}: {{$.SortField.NameCamel}},
+    }
+{{- else}}
+func (p *{{$.Object.NameCamel}}Mock) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}) error {
+    key := {{$.Object.NameCamel}}Key{
+        {{$.HashField.NameCamel}}: {{$.HashField.NameCamel}},
+    }
+{{- end}}
+
+    delete(p.data, key)
+
+    return nil
+}
+
+//Scan{{$.Object.NameTitle}} scans the {{$.Object.NameTitle}} table
+func (p *{{$.Object.NameCamel}}Mock) Scan{{$.Object.NameTitle}}(ctx context.Context) (ret []*{{$.Object.NameTitle}}, err error) {
+
+    ret = make([]*{{$.Object.NameTitle}}, 0, len(p.data))
+
+    for _, v := range p.data {
+        ret = append(ret, v)
+    }
+
+	sort.Slice(ret, func(i, j int) bool {
+{{- if $.HasSort}}
+		if ret[i].{{$.HashField.NameTitle}} == ret[j].{{$.HashField.NameTitle}} {
+			return ret[i].{{$.SortField.NameTitle}} < ret[j].{{$.SortField.NameTitle}}
+		} else {
+			return ret[i].{{$.HashField.NameTitle}} < ret[j].{{$.HashField.NameTitle}}
+		}
+{{- else }}
+        return ret[i].{{$.HashField.NameTitle}} < ret[j].{{$.HashField.NameTitle}}
+{{- end }}
+	})
+
+    return ret, nil
+}
+
+{{- if $.HasSort}}
+//BatchGet{{$.Object.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database
+func (p *{{$.Object.NameCamel}}Mock) BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []BatchGetInput{{$.Object.NameTitle}}) (ret []*{{$.Object.NameTitle}}, err error) {
+{{- else}}
+//BatchGet{{$.Object.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database
+func (p *{{$.Object.NameCamel}}Mock) BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []{{$.HashField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
+{{- end}}
+
+    ret = make([]*{{$.Object.NameTitle}}, 0, len(rows))
+
+    for _, row := range rows {
+        {{- if $.HasSort}}
+            key := {{$.Object.NameCamel}}Key{
+                {{$.HashField.NameCamel}}: row.{{$.HashField.NameTitle}},
+                {{$.SortField.NameCamel}}: row.{{$.SortField.NameTitle}},
+            }
+        {{- else}}
+            key := {{$.Object.NameCamel}}Key{
+                {{$.HashField.NameCamel}}: row,
+            }
+        {{- end}}
+
+        val, ok := p.data[key]
+        if ok {
+            ret = append(ret, val)
+        }
+    }
+    return ret, nil
+}
+
+{{- if $.HasSort}}
+func (p *{{$.Object.NameCamel}}Mock) BatchGet{{$.Object.NameTitle}}By{{$.HashField.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}, rows []{{$.SortField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    ret = make([]*{{$.Object.NameTitle}}, 0, len(rows))
+
+    for _, row := range rows {
+        key := {{$.Object.NameCamel}}Key{
+            {{$.HashField.NameCamel}}: {{$.HashField.NameCamel}},
+            {{$.SortField.NameCamel}}: row,
+        }
+
+        val, ok := p.data[key]
+        if ok {
+            ret = append(ret, val)
+        }
+    }
+    return ret, nil
+}
+{{- end }}
+
+{{- if $.HasSort}}
+//List{{$.Object.NameTitle}} gets a list of {{$.Object.NameTitle}} from the database using the hash key
+func (p *{{$.Object.NameCamel}}Mock) List{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+
+    ret = make([]*{{$.Object.NameTitle}}, 0)
+
+    for k, v := range p.data {
+        if k.{{$.HashField.NameCamel}} == {{$.HashField.NameCamel}} {
+            ret = append(ret, v)
+        }
+    }
+
+    sort.Slice(ret, func(i, j int) bool {
+        return ret[i].{{$.SortField.NameTitle}} < ret[j].{{$.SortField.NameTitle}}
+	})
+
+    return ret, nil
+}
+{{- end}}
+
+{{-  if $.GSIs }}
+    {{-  range $gsi := $.GSIs }}
+{{-  if and ($gsi.HasSort) (ne $gsi.HashKey $gsi.Name) }}
+
+//List{{$.Object.NameTitle}}By{{$gsi.GoName}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
+func (p *{{$.Object.NameCamel}}Mock) List{{$.Object.NameTitle}}By{{$gsi.GoName}}(ctx context.Context, {{$gsi.HashField.NameCamel}} {{$gsi.HashField.GoTypeRequired}}, {{$gsi.SortField.NameCamel}} {{$gsi.SortField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    ret = make([]*{{$.Object.NameTitle}}, 0)
+
+    for _, v := range p.data {
+    {{- if and (not $gsi.HashField.Required) (not $gsi.SortField.Required) }}
+        if v.{{$gsi.HashField.NameTitle}} != nil && *v.{{$gsi.HashField.NameTitle}} == {{$gsi.HashField.NameCamel}} && v.{{$gsi.SortField.NameTitle}} != nil && *v.{{$gsi.SortField.NameTitle}} == {{$gsi.SortField.NameCamel}} {
+    {{- else if not $gsi.HashField.Required }}
+        if v.{{$gsi.HashField.NameTitle}} != nil && *v.{{$gsi.HashField.NameTitle}} == {{$gsi.HashField.NameCamel}} && v.{{$gsi.SortField.NameTitle}} == {{$gsi.SortField.NameCamel}} {
+    {{- else if not $gsi.SortField.Required }}
+        if v.{{$gsi.HashField.NameTitle}} == {{$gsi.HashField.NameCamel}} && v.{{$gsi.SortField.NameTitle}} != nil && *v.{{$gsi.SortField.NameTitle}} == {{$gsi.SortField.NameCamel}} {
+    {{- else }}
+        if v.{{$gsi.HashField.NameTitle}} == {{$gsi.HashField.NameCamel}} && v.{{$gsi.SortField.NameTitle}} == {{$gsi.SortField.NameCamel}} {
+    {{- end }}
+            ret = append(ret, v)
+        }
+    }
+
+    	sort.Slice(ret, func(i, j int) bool {
+    {{- if and (not $gsi.HashField.Required) (not $gsi.SortField.Required) }}
+		if *ret[i].{{$gsi.HashField.NameTitle}} == *ret[j].{{$gsi.HashField.NameTitle}} {
+			return *ret[i].{{$gsi.SortField.NameTitle}} < *ret[j].{{$gsi.SortField.NameTitle}}
+		} else {
+			return *ret[i].{{$gsi.HashField.NameTitle}} < *ret[j].{{$gsi.HashField.NameTitle}}
+		}
+    {{- else if not $gsi.HashField.Required }}
+        if *ret[i].{{$gsi.HashField.NameTitle}} == *ret[j].{{$gsi.HashField.NameTitle}} {
+            return ret[i].{{$gsi.SortField.NameTitle}} < ret[j].{{$gsi.SortField.NameTitle}}
+        } else {
+            return *ret[i].{{$gsi.HashField.NameTitle}} < *ret[j].{{$gsi.HashField.NameTitle}}
+        }
+    {{- else if not $gsi.SortField.Required }}
+        if ret[i].{{$gsi.HashField.NameTitle}} == ret[j].{{$gsi.HashField.NameTitle}} {
+			return *ret[i].{{$gsi.SortField.NameTitle}} < *ret[j].{{$gsi.SortField.NameTitle}}
+		} else {
+			return ret[i].{{$gsi.HashField.NameTitle}} < ret[j].{{$gsi.HashField.NameTitle}}
+		}
+    {{- else }}
+        if ret[i].{{$gsi.HashField.NameTitle}} == ret[j].{{$gsi.HashField.NameTitle}} {
+			return ret[i].{{$gsi.SortField.NameTitle}} < ret[j].{{$gsi.SortField.NameTitle}}
+		} else {
+			return ret[i].{{$gsi.HashField.NameTitle}} < ret[j].{{$gsi.HashField.NameTitle}}
+		}
+    {{- end }}
+	})
+
+    return ret, nil
+}
+
+{{- end}}
+
+//List{{$.Object.NameTitle}}By{{$gsi.HashField.NameTitle}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
+func (p *{{$.Object.NameCamel}}Mock) List{{$.Object.NameTitle}}By{{$gsi.HashField.NameTitle}}(ctx context.Context, {{$gsi.HashField.NameCamel}} {{$gsi.HashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+    ret = make([]*{{$.Object.NameTitle}}, 0)
+
+    for _, v := range p.data {
+    {{- if not $gsi.HashField.Required }}
+        if v.{{$gsi.HashField.NameTitle}} != nil && *v.{{$gsi.HashField.NameTitle}} == {{$gsi.HashField.NameCamel}} {
+    {{- else }}
+        if v.{{$gsi.HashField.NameTitle}} == {{$gsi.HashField.NameCamel}} {
+    {{- end }}
+            ret = append(ret, v)
+        }
+    }
+
+    sort.Slice(ret, func(i, j int) bool {
+    {{- if $gsi.HasSort }}
+        {{- if and (not $gsi.HashField.Required) (not $gsi.SortField.Required) }}
+            if *ret[i].{{$gsi.HashField.NameTitle}} == *ret[j].{{$gsi.HashField.NameTitle}} {
+                return *ret[i].{{$gsi.SortField.NameTitle}} < *ret[j].{{$gsi.SortField.NameTitle}}
+            } else {
+                return *ret[i].{{$gsi.HashField.NameTitle}} < *ret[j].{{$gsi.HashField.NameTitle}}
+            }
+        {{- else if not $gsi.HashField.Required }}
+            if *ret[i].{{$gsi.HashField.NameTitle}} == *ret[j].{{$gsi.HashField.NameTitle}} {
+                return ret[i].{{$gsi.SortField.NameTitle}} < ret[j].{{$gsi.SortField.NameTitle}}
+            } else {
+                return *ret[i].{{$gsi.HashField.NameTitle}} < *ret[j].{{$gsi.HashField.NameTitle}}
+            }
+        {{- else if not $gsi.SortField.Required }}
+            if ret[i].{{$gsi.HashField.NameTitle}} == ret[j].{{$gsi.HashField.NameTitle}} {
+                return *ret[i].{{$gsi.SortField.NameTitle}} < *ret[j].{{$gsi.SortField.NameTitle}}
+            } else {
+                return ret[i].{{$gsi.HashField.NameTitle}} < ret[j].{{$gsi.HashField.NameTitle}}
+            }
+        {{- else }}
+            if ret[i].{{$gsi.HashField.NameTitle}} == ret[j].{{$gsi.HashField.NameTitle}} {
+                return ret[i].{{$gsi.SortField.NameTitle}} < ret[j].{{$gsi.SortField.NameTitle}}
+            } else {
+                return ret[i].{{$gsi.HashField.NameTitle}} < ret[j].{{$gsi.HashField.NameTitle}}
+            }
+        {{- end }}
+    {{- else }}
+        {{- if not $gsi.HashField.Required }}
+            return *ret[i].{{$gsi.HashField.NameTitle}} < *ret[j].{{$gsi.HashField.NameTitle}}
+        {{- else }}
+            return ret[i].{{$gsi.HashField.NameTitle}} < ret[j].{{$gsi.HashField.NameTitle}}
+        {{- end }}
+    {{- end }}
+	})
+
+    return ret, nil
+}
+{{- end}}
+{{- end}}

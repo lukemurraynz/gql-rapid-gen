@@ -3,6 +3,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/mjdrgn/gql-rapid-gen/util"
 	"github.com/vektah/gqlparser/v2/ast"
 	"strings"
@@ -35,6 +36,20 @@ func (pf *ParsedField) NameDash() string {
 func (pf *ParsedField) HasDirective(key string) bool {
 	_, ok := pf.Directives[key]
 	return ok
+}
+
+func (pf *ParsedField) SingleDirective(key string) *ParsedDirective {
+	v, ok := pf.Directives[key]
+	if !ok {
+		return nil
+	}
+	if len(v) == 0 {
+		panic(fmt.Errorf("'%s' had '%s' directive found but len 0", pf.Name, key))
+	}
+	if len(v) > 1 {
+		panic(fmt.Errorf("field '%s' had duplicate '%s' directives", pf.Name, key))
+	}
+	return v[0]
 }
 
 func (pf *ParsedField) GoStructTag() string {
