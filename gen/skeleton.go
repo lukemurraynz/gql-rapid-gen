@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // templateFiles includes core and plugin templates
@@ -29,6 +30,16 @@ func WriteSkeleton(outputDir string) (err error) {
 				return fmt.Errorf("failed creating directory '%s': %w", path, err)
 			}
 			return nil
+		}
+
+		base := filepath.Base(target)
+		ext := filepath.Ext(target)
+		if ext == "replace" {
+			target = strings.Replace(target, ".replace", "", 1)
+			ext = filepath.Ext(target)
+		}
+		if base == "gitkeep" {
+			target = strings.Replace(target, "gitkeep", ".gitkeep", 1)
 		}
 
 		srcFile, err := fs.ReadFile(skeletonFiles, path)

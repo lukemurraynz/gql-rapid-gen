@@ -140,7 +140,7 @@ func TestPlugin_Execute_Format(t *testing.T) {
 
 	rendered := file.String()
 
-	_, err = gen.Types["go_gen"].Format(rendered)
+	_, err = gen.Types[gen.GO_DATA_GEN].Format(rendered)
 	require.Nil(t, err)
 }
 
@@ -228,7 +228,7 @@ func TestPlugin_Execute_Fields(t *testing.T) {
 
 	rendered := file.String()
 
-	_, err = gen.Types["go_gen"].Format(rendered)
+	_, err = gen.Types[gen.GO_DATA_GEN].Format(rendered)
 	require.Nil(t, err)
 
 	assert.Contains(t, rendered, "StrField")

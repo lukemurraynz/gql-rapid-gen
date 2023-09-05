@@ -16,6 +16,22 @@ type FieldType struct {
 	CollectionSubtype *FieldType
 }
 
+// TypeStringReq is a pre-filled FieldType for a Required String field. This is used primarily for unit testing.
+var TypeStringReq = &FieldType{
+	Kind:              "String",
+	Required:          true,
+	Collection:        false,
+	CollectionSubtype: nil,
+}
+
+// TypeIntReq is a pre-filled FieldType for a Required Int field. This is used primarily for unit testing.
+var TypeIntReq = &FieldType{
+	Kind:              "String",
+	Required:          true,
+	Collection:        false,
+	CollectionSubtype: nil,
+}
+
 func ParseFieldType(typ *ast.Type) *FieldType {
 	if typ.Elem == nil {
 		return &FieldType{

@@ -20,7 +20,6 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 		if o.HasDirective("dynamodb") {
 			names = append(names, o.NameTitle())
 		}
-
 	}
 
 	rendered, err := gen.ExecuteTemplate("plugins/go_common/templates/providers.tmpl", data{

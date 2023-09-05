@@ -11,33 +11,33 @@ import (
 type {{$.Object.NameCamel}}ProviderBase interface {
 
 {{- if $.HasSort}}
-    Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}, {{$.SortField.NameCamel}} {{$.SortField.GoType}}) (ret *{{$.Object.NameTitle}}, err error)
+    Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}, {{$.SortKey.NameCamel}} {{$.SortKey.Type.GoType}}) (ret *{{$.Object.NameTitle}}, err error)
 {{- else}}
-    Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}) (ret *{{$.Object.NameTitle}}, err error)
+    Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}) (ret *{{$.Object.NameTitle}}, err error)
 {{- end}}
     Put{{$.Object.NameTitle}}(ctx context.Context, {{$.Object.NameCamel}} *{{$.Object.NameTitle}}) error
     GetPut({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) (put *types.Put, err error)
 {{- if $.HasSort}}
-    Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}, {{$.SortField.NameCamel}} {{$.SortField.GoType}}) error
+    Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}, {{$.SortKey.NameCamel}} {{$.SortKey.Type.GoType}}) error
 {{- else}}
-    Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}) error
+    Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}) error
 {{- end}}
     Scan{{$.Object.NameTitle}}(ctx context.Context) (ret []*{{$.Object.NameTitle}}, err error)
 {{- if $.HasSort}}
     BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []BatchGetInput{{$.Object.NameTitle}}) (ret []*{{$.Object.NameTitle}}, err error)
-    BatchGet{{$.Object.NameTitle}}By{{$.HashField.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}, rows []{{$.SortField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error)
+    BatchGet{{$.Object.NameTitle}}By{{$.HashKey.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}, rows []{{$.SortKey.Type.GoType}}) (ret []*{{$.Object.NameTitle}}, err error)
 {{- else}}
-    BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []{{$.HashField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error)
+    BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []{{$.HashKey.Type.GoType}}) (ret []*{{$.Object.NameTitle}}, err error)
 {{- end}}
 {{- if $.HasSort}}
-    List{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error)
+    List{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error)
 {{- end}}
 {{-  if $.GSIs }}
     {{-  range $gsi := $.GSIs }}
-        {{-  if and ($gsi.HasSort) (ne $gsi.HashKey $gsi.Name) }}
-            List{{$.Object.NameTitle}}By{{$gsi.GoName}}(ctx context.Context, {{$gsi.HashField.NameCamel}} {{$gsi.HashField.GoTypeRequired}}, {{$gsi.SortField.NameCamel}} {{$gsi.SortField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error)
+        {{-  if and ($gsi.HasSort) (ne $gsi.HashKey.Name $gsi.Name) }}
+            List{{$.Object.NameTitle}}By{{$gsi.NameTitle}}(ctx context.Context, {{$gsi.HashKey.NameCamel}} {{$gsi.HashKey.Type.GoTypeRequired}}, {{$gsi.SortKey.NameCamel}} {{$gsi.SortKey.Type.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error)
         {{- end}}
-        List{{$.Object.NameTitle}}By{{$gsi.HashField.NameTitle}}(ctx context.Context, {{$gsi.HashField.NameCamel}} {{$gsi.HashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error)
+        List{{$.Object.NameTitle}}By{{$gsi.HashKey.NameTitle}}(ctx context.Context, {{$gsi.HashKey.NameCamel}} {{$gsi.HashKey.Type.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error)
     {{- end}}
 {{- end}}
 }
@@ -63,16 +63,16 @@ var {{$.Object.NameCamel}}ExtraValidator func(*{{$.Object.NameTitle}}) error
 //Validate validates the {{$.Object.NameTitle}} struct
 func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) Validate() error {
     {{- range $index, $field := $.Fields}}
-        {{- if or (eq $field.Name $.HashField.Name) (eq $field.Name $.SortField.Name)}}
-            {{- if eq $field.DynamoType "S"}}
+        {{- if or (eq $field.Name $.HashKey.Name) (and $.HasSort (eq $field.Name $.SortKey.Name))}}
+            {{- if eq $field.Type.DynamoType "S"}}
             if {{$.Object.NameCamel}}.{{$field.NameTitle}} == "" {
-            {{- else if eq $field.DynamoType "N"}}
+            {{- else if eq $field.Type.DynamoType "N"}}
             if {{$.Object.NameCamel}}.{{$field.NameTitle}} == 0 {
             {{- end}}
                 return fmt.Errorf("key field {{$.Object.NameTitle}}.{{$field.Name}} is required")
             }
         {{- end}}
-        {{- if and $field.Collection $field.IsCollectionOfObjects}}
+        {{- if and $field.Type.Collection $field.Type.IsCollectionOfObjects}}
             {{if eq $field.Required false }}
             if {{$.Object.NameCamel}}.{{$field.NameTitle}} != nil && len({{$.Object.NameCamel}}.{{$field.NameTitle}}) != 0 {
                 for _, item := range {{$.Object.NameCamel}}.{{$field.NameTitle}} {
@@ -101,19 +101,19 @@ func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) Validate() error {
 
 func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) key() map[string]types.AttributeValue {
     return map[string]types.AttributeValue{
-        "{{$.HashField.Name}}": &types.AttributeValueMember{{$.HashField.DynamoType}} {
-            {{- if eq $.HashField.DynamoType "S"}}
-            Value: {{$.Object.NameCamel}}.{{$.HashField.NameTitle}},
+        "{{$.HashKey.Name}}": &types.AttributeValueMember{{$.HashKey.Type.DynamoType}} {
+            {{- if eq $.HashKey.Type.DynamoType "S"}}
+            Value: {{$.Object.NameCamel}}.{{$.HashKey.NameTitle}},
             {{- else}}
-            Value: fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$.HashField.NameTitle}}),
+            Value: fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$.HashKey.NameTitle}}),
             {{- end}}
         },
         {{- if $.HasSort}}
-        "{{$.SortField.Name}}": &types.AttributeValueMember{{$.SortField.DynamoType}} {
-            {{- if eq $.SortField.DynamoType "S"}}
-                Value: {{$.Object.NameCamel}}.{{$.SortField.NameTitle}},
+        "{{$.SortKey.Name}}": &types.AttributeValueMember{{$.SortKey.Type.DynamoType}} {
+            {{- if eq $.SortKey.Type.DynamoType "S"}}
+                Value: {{$.Object.NameCamel}}.{{$.SortKey.NameTitle}},
             {{- else}}
-                Value: fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$.SortField.NameTitle}}),
+                Value: fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$.SortKey.NameTitle}}),
             {{- end}}
         },
         {{end}}
@@ -122,16 +122,16 @@ func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) key() map[string]types.Att
 
 func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) GetMapID() string {
 {{- if $.HasSort }}
-    {{- if eq $.SortField.DynamoType "S"}}
-    return {{$.Object.NameCamel}}.{{$.SortField.NameTitle}}
+    {{- if eq $.SortKey.Type.DynamoType "S"}}
+    return {{$.Object.NameCamel}}.{{$.SortKey.NameTitle}}
     {{- else }}
-    return fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$.SortField.NameTitle}})
+    return fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$.SortKey.NameTitle}})
     {{- end }}
 {{- else }}
-    {{- if eq $.HashField.DynamoType "S"}}
-        return {{$.Object.NameCamel}}.{{$.HashField.NameTitle}}
+    {{- if eq $.HashKey.Type.DynamoType "S"}}
+        return {{$.Object.NameCamel}}.{{$.HashKey.NameTitle}}
     {{- else }}
-        return fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$.HashField.NameTitle}})
+        return fmt.Sprintf("%d", {{$.Object.NameCamel}}.{{$.HashKey.NameTitle}})
     {{- end }}
 {{- end }}
 }
@@ -142,39 +142,39 @@ func (p *{{$.Object.NameTitle}}Impl) tableName() *string {
 
 //Get{{$.Object.NameTitle}} gets a {{$.Object.NameTitle}} from the database
 {{- if $.HasSort}}
-func (p *{{$.Object.NameTitle}}Impl) Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}, {{$.SortField.NameCamel}} {{$.SortField.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
+func (p *{{$.Object.NameTitle}}Impl) Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}, {{$.SortKey.NameCamel}} {{$.SortKey.Type.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
 {{- else}}
-func (p *{{$.Object.NameTitle}}Impl) Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
+func (p *{{$.Object.NameTitle}}Impl) Get{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}) (ret *{{$.Object.NameTitle}}, err error) {
 {{- end}}
     result, err := p.db.GetItem(ctx, &dynamodb.GetItemInput{
         TableName: p.tableName(),
         Key: map[string]types.AttributeValue{
-            "{{$.HashField.Name}}": &types.AttributeValueMember{{$.HashField.DynamoType}} {
-                {{- if eq $.HashField.DynamoType "S"}}
-                Value: {{$.HashField.NameCamel}},
+            "{{$.HashKey.Name}}": &types.AttributeValueMember{{$.HashKey.Type.DynamoType}} {
+                {{- if eq $.HashKey.Type.DynamoType "S"}}
+                Value: {{$.HashKey.NameCamel}},
                 {{- else}}
-                Value: fmt.Sprintf("%d", {{$.HashField.NameCamel}}),
+                Value: fmt.Sprintf("%d", {{$.HashKey.NameCamel}}),
                 {{- end}}
             },
             {{- if $.HasSort}}
-            "{{$.SortField.Name}}": &types.AttributeValueMember{{$.SortField.DynamoType}} {
-                {{- if eq $.SortField.DynamoType "S"}}
-                    Value: {{$.SortField.NameCamel}},
+            "{{$.SortKey.Name}}": &types.AttributeValueMember{{$.SortKey.Type.DynamoType}} {
+                {{- if eq $.SortKey.Type.DynamoType "S"}}
+                    Value: {{$.SortKey.NameCamel}},
                 {{- else}}
-                    Value: fmt.Sprintf("%d", {{$.SortField.NameCamel}}),
+                    Value: fmt.Sprintf("%d", {{$.SortKey.NameCamel}}),
                 {{- end}}
             },
             {{end}}
         },
     })
     if err != nil {
-        return nil, fmt.Errorf("failed to get {{$.Object.NameTitle}} from table with id %s: %v", {{$.HashField.NameCamel}}, err)
+        return nil, fmt.Errorf("failed to get {{$.Object.NameTitle}} from table with id %s: %v", {{$.HashKey.NameCamel}}, err)
     }
     ret = &{{$.Object.NameTitle}}{}
 
     err = attributevalue.UnmarshalMap(result.Item, ret)
     if err != nil {
-        return nil, fmt.Errorf("failed to unmarshal {{$.Object.NameTitle}} from table with id %s: %v", {{$.HashField.NameCamel}}, err)
+        return nil, fmt.Errorf("failed to unmarshal {{$.Object.NameTitle}} from table with id %s: %v", {{$.HashKey.NameCamel}}, err)
     }
     return ret, nil
 }
@@ -215,33 +215,33 @@ func (p *{{$.Object.NameTitle}}Impl) GetPut({{$.Object.NameCamel}} *{{$.Object.N
 
 //Delete{{$.Object.NameTitle}} deletes a {{$.Object.NameTitle}} from the database
 {{- if $.HasSort}}
-func (p *{{$.Object.NameTitle}}Impl) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}, {{$.SortField.NameCamel}} {{$.SortField.GoType}}) error {
+func (p *{{$.Object.NameTitle}}Impl) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}, {{$.SortKey.NameCamel}} {{$.SortKey.Type.GoType}}) error {
 {{- else}}
-func (p *{{$.Object.NameTitle}}Impl) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}) error {
+func (p *{{$.Object.NameTitle}}Impl) Delete{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}) error {
 {{- end}}
     _, err := p.db.DeleteItem(ctx, &dynamodb.DeleteItemInput{
         TableName: p.tableName(),
         Key: map[string]types.AttributeValue{
-            "{{$.HashField.Name}}": &types.AttributeValueMember{{$.HashField.DynamoType}} {
-            {{- if eq $.HashField.DynamoType "S"}}
-                Value: {{$.HashField.NameCamel}},
+            "{{$.HashKey.Name}}": &types.AttributeValueMember{{$.HashKey.Type.DynamoType}} {
+            {{- if eq $.HashKey.Type.DynamoType "S"}}
+                Value: {{$.HashKey.NameCamel}},
             {{- else}}
-                Value: fmt.Sprintf("%d", {{$.HashField.NameCamel}}),
+                Value: fmt.Sprintf("%d", {{$.HashKey.NameCamel}}),
             {{- end}}
             },
             {{- if $.HasSort}}
-                "{{$.SortField.Name}}": &types.AttributeValueMember{{$.SortField.DynamoType}} {
-                {{- if eq $.SortField.DynamoType "S"}}
-                    Value: {{$.SortField.NameCamel}},
+                "{{$.SortKey.Name}}": &types.AttributeValueMember{{$.SortKey.Type.DynamoType}} {
+                {{- if eq $.SortKey.Type.DynamoType "S"}}
+                    Value: {{$.SortKey.NameCamel}},
                 {{- else}}
-                    Value: fmt.Sprintf("%d", {{$.SortField.NameCamel}}),
+                    Value: fmt.Sprintf("%d", {{$.SortKey.NameCamel}}),
                 {{- end}}
                 },
             {{end}}
         },
     })
     if err != nil {
-        return fmt.Errorf("failed to delete {{$.Object.NameTitle}} from table with id %s: %v", {{$.HashField.NameCamel}}, err)
+        return fmt.Errorf("failed to delete {{$.Object.NameTitle}} from table with id %s: %v", {{$.HashKey.NameCamel}}, err)
     }
     return nil
 }
@@ -275,36 +275,36 @@ func (p *{{$.Object.NameTitle}}Impl) Scan{{$.Object.NameTitle}}(ctx context.Cont
 {{- if $.HasSort}}
 //BatchGetInput{{$.Object.NameTitle}} represents the keys to fetch {{$.Object.NameTitle}} from the database
 type BatchGetInput{{$.Object.NameTitle}} struct {
-    {{$.HashField.NameTitle}} {{$.HashField.GoType}}
-    {{$.SortField.NameTitle}} {{$.SortField.GoType}}
+    {{$.HashKey.NameTitle}} {{$.HashKey.Type.GoType}}
+    {{$.SortKey.NameTitle}} {{$.SortKey.Type.GoType}}
 }
 
 //BatchGet{{$.Object.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database
 func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []BatchGetInput{{$.Object.NameTitle}}) (ret []*{{$.Object.NameTitle}}, err error) {
 {{- else}}
 //BatchGet{{$.Object.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database
-func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []{{$.HashField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
+func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}(ctx context.Context, rows []{{$.HashKey.Type.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
 {{- end}}
     keys := make([]map[string]types.AttributeValue, 0, len(rows))
     for _, val := range rows {
         keys = append(keys, map[string]types.AttributeValue{
             {{- if $.HasSort}}
-            "{{$.HashField.Name}}": &types.AttributeValueMember{{$.HashField.DynamoType}} {
-                {{- if eq $.HashField.DynamoType "S"}}
-                    Value: val.{{$.HashField.NameTitle}},
+            "{{$.HashKey.Name}}": &types.AttributeValueMember{{$.HashKey.Type.DynamoType}} {
+                {{- if eq $.HashKey.Type.DynamoType "S"}}
+                    Value: val.{{$.HashKey.NameTitle}},
                 {{- else}}
-                    Value: fmt.Sprintf("%d", val.{{$.HashField.NameTitle}}),
+                    Value: fmt.Sprintf("%d", val.{{$.HashKey.NameTitle}}),
                 {{- end}}
             },
-            "{{$.SortField.Name}}": &types.AttributeValueMember{{$.SortField.DynamoType}} {
-                {{- if eq $.SortField.DynamoType "S"}}
-                    Value: val.{{$.SortField.NameTitle}},
+            "{{$.SortKey.Name}}": &types.AttributeValueMember{{$.SortKey.Type.DynamoType}} {
+                {{- if eq $.SortKey.Type.DynamoType "S"}}
+                    Value: val.{{$.SortKey.NameTitle}},
                 {{- else}}
-                    Value: fmt.Sprintf("%d", val.{{$.SortField.NameTitle}}),
+                    Value: fmt.Sprintf("%d", val.{{$.SortKey.NameTitle}}),
                 {{- end}}
             },
             {{- else}}
-            "{{$.HashField.Name}}": &types.AttributeValueMember{{$.HashField.DynamoType}} {
+            "{{$.HashKey.Name}}": &types.AttributeValueMember{{$.HashKey.Type.DynamoType}} {
                 Value: val,
             },
             {{- end}}
@@ -329,20 +329,20 @@ func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}(ctx context.
 }
 
 {{- if $.HasSort}}
-//BatchGet{{$.Object.NameTitle}}By{{$.HashField.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database with a common {{$.HashField.NameTitle}}
-func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}By{{$.HashField.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoType}}, rows []{{$.SortField.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
+//BatchGet{{$.Object.NameTitle}}By{{$.HashKey.NameTitle}} retrieves multiple {{$.Object.NameTitle}} from the database with a common {{$.HashKey.NameTitle}}
+func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}By{{$.HashKey.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoType}}, rows []{{$.SortKey.Type.GoType}}) (ret []*{{$.Object.NameTitle}}, err error) {
     keys := make([]map[string]types.AttributeValue, 0, len(rows))
     for _, val := range rows {
         keys = append(keys, map[string]types.AttributeValue{
-            "{{$.HashField.Name}}": &types.AttributeValueMember{{$.HashField.DynamoType}} {
-                {{- if eq $.HashField.DynamoType "S"}}
-                    Value: {{$.HashField.NameCamel}},
+            "{{$.HashKey.Name}}": &types.AttributeValueMember{{$.HashKey.Type.DynamoType}} {
+                {{- if eq $.HashKey.Type.DynamoType "S"}}
+                    Value: {{$.HashKey.NameCamel}},
                 {{- else}}
-                    Value: fmt.Sprintf("%d", {{$.HashField.NameCamel}}),
+                    Value: fmt.Sprintf("%d", {{$.HashKey.NameCamel}}),
                 {{- end}}
             },
-            "{{$.SortField.Name}}": &types.AttributeValueMember{{$.SortField.DynamoType}} {
-                {{- if eq $.SortField.DynamoType "S"}}
+            "{{$.SortKey.Name}}": &types.AttributeValueMember{{$.SortKey.Type.DynamoType}} {
+                {{- if eq $.SortKey.Type.DynamoType "S"}}
                     Value: val,
                 {{- else}}
                     Value: fmt.Sprintf("%d", val),
@@ -371,17 +371,17 @@ func (p *{{$.Object.NameTitle}}Impl) BatchGet{{$.Object.NameTitle}}By{{$.HashFie
 
 {{- if $.HasSort}}
 //List{{$.Object.NameTitle}} gets a list of {{$.Object.NameTitle}} from the database using the hash key
-func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}(ctx context.Context, {{$.HashField.NameCamel}} {{$.HashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}(ctx context.Context, {{$.HashKey.NameCamel}} {{$.HashKey.Type.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
     var lastEvaluatedKey map[string]types.AttributeValue
     for {
         resp, err := p.db.Query(ctx, &dynamodb.QueryInput{
             TableName: p.tableName(),
             KeyConditions: map[string]types.Condition{
-                "{{$.HashField.Name}}": {
+                "{{$.HashKey.Name}}": {
                     ComparisonOperator: types.ComparisonOperatorEq,
                     AttributeValueList: []types.AttributeValue{
-                        &types.AttributeValueMember{{$.HashField.DynamoType}}{
-                            Value: {{$.HashField.NameCamel}},
+                        &types.AttributeValueMember{{$.HashKey.Type.DynamoType}}{
+                            Value: {{$.HashKey.NameCamel}},
                         },
                     },
                 },
@@ -409,29 +409,29 @@ func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}(ctx context.Cont
 
 {{-  if $.GSIs }}
     {{-  range $gsi := $.GSIs }}
-{{-  if and ($gsi.SortKey) (ne $gsi.HashKey $gsi.Name) }}
+{{-  if and ($gsi.SortKey) (ne $gsi.HashKey.Name $gsi.Name) }}
 
-//List{{$.Object.NameTitle}}By{{$gsi.GoName}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
-func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}By{{$gsi.GoName}}(ctx context.Context, {{$gsi.HashField.NameCamel}} {{$gsi.HashField.GoTypeRequired}}, {{$gsi.SortField.NameCamel}} {{$gsi.SortField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+//List{{$.Object.NameTitle}}By{{$gsi.NameTitle}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
+func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}By{{$gsi.NameTitle}}(ctx context.Context, {{$gsi.HashKey.NameCamel}} {{$gsi.HashKey.Type.GoTypeRequired}}, {{$gsi.SortKey.NameCamel}} {{$gsi.SortKey.Type.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
     var lastEvaluatedKey map[string]types.AttributeValue
     for {
         resp, err := p.db.Query(ctx, &dynamodb.QueryInput{
             TableName: p.tableName(),
             IndexName: aws.String("{{$gsi.Name}}"),
             KeyConditions: map[string]types.Condition{
-                "{{$gsi.HashField.Name}}": {
+                "{{$gsi.HashKey.Name}}": {
                     ComparisonOperator: types.ComparisonOperatorEq,
                     AttributeValueList: []types.AttributeValue{
-                        &types.AttributeValueMember{{$gsi.HashField.DynamoType}}{
-                            Value: {{$gsi.HashField.NameCamel}},
+                        &types.AttributeValueMember{{$gsi.HashKey.Type.DynamoType}}{
+                            Value: {{$gsi.HashKey.NameCamel}},
                         },
                     },
                 },
-                "{{$gsi.SortField.Name}}": {
+                "{{$gsi.SortKey.Name}}": {
                     ComparisonOperator: types.ComparisonOperatorEq,
                     AttributeValueList: []types.AttributeValue{
-                        &types.AttributeValueMember{{$gsi.SortField.DynamoType}}{
-                            Value: {{$gsi.SortField.NameCamel}},
+                        &types.AttributeValueMember{{$gsi.SortKey.Type.DynamoType}}{
+                            Value: {{$gsi.SortKey.NameCamel}},
                         },
                     },
                 },
@@ -458,19 +458,19 @@ func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}By{{$gsi.GoName}}
 
 {{- end}}
 
-//List{{$.Object.NameTitle}}By{{$gsi.HashField.NameTitle}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
-func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}By{{$gsi.HashField.NameTitle}}(ctx context.Context, {{$gsi.HashField.NameCamel}} {{$gsi.HashField.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
+//List{{$.Object.NameTitle}}By{{$gsi.HashKey.NameTitle}} gets a list of {{$.Object.NameTitle}} from the database using the {{ $gsi.Name }} GSI
+func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}By{{$gsi.HashKey.NameTitle}}(ctx context.Context, {{$gsi.HashKey.NameCamel}} {{$gsi.HashKey.Type.GoTypeRequired}}) (ret []*{{$.Object.NameTitle}}, err error) {
     var lastEvaluatedKey map[string]types.AttributeValue
     for {
         resp, err := p.db.Query(ctx, &dynamodb.QueryInput{
             TableName: p.tableName(),
             IndexName: aws.String("{{$gsi.Name}}"),
             KeyConditions: map[string]types.Condition{
-                "{{$gsi.HashField.Name}}": {
+                "{{$gsi.HashKey.Name}}": {
                     ComparisonOperator: types.ComparisonOperatorEq,
                     AttributeValueList: []types.AttributeValue{
-                        &types.AttributeValueMember{{$gsi.HashField.DynamoType}}{
-                            Value: {{$gsi.HashField.NameCamel}},
+                        &types.AttributeValueMember{{$gsi.HashKey.Type.DynamoType}}{
+                            Value: {{$gsi.HashKey.NameCamel}},
                         },
                     },
                 },

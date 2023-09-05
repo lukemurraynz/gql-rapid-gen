@@ -1,6 +1,6 @@
 // Copyright (c) 2023 under the MIT license per gql-rapid-gen/LICENSE.MD
 
-package gen
+package main
 
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/go_common"
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/go_dynamodb"

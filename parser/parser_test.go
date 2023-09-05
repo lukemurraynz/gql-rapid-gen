@@ -63,7 +63,7 @@ func Test_Parse_Types(t *testing.T) {
 }
 
 func Test_Parse_RepeatedDirectives(t *testing.T) {
-	files := []string{"testdata/dir_repeat.graphql"}
+	files := []string{"testdata/dir_repeat.graphql", "../def.graphql"}
 
 	output, err := Parse(files)
 

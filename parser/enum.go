@@ -21,7 +21,7 @@ func (e ParsedEnum) ValueString() []string {
 type EnumValue struct {
 	Name        string
 	Description string
-	Directives  map[string]*ParsedDirective
+	Directives  map[string][]*ParsedDirective
 }
 
 func parseEnumValue(def *ast.EnumValueDefinition) (ret *EnumValue) {
