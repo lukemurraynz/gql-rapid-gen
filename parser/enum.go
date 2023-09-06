@@ -2,7 +2,10 @@
 
 package parser
 
-import "github.com/vektah/gqlparser/v2/ast"
+import (
+	"github.com/mjdrgn/gql-rapid-gen/util"
+	"github.com/vektah/gqlparser/v2/ast"
+)
 
 type ParsedEnum struct {
 	Name        string
@@ -10,7 +13,23 @@ type ParsedEnum struct {
 	Values      []*EnumValue
 }
 
-func (e ParsedEnum) ValueString() []string {
+func (e *ParsedEnum) NameTitle() string {
+	return util.TitleCase(e.Name)
+}
+
+func (e *ParsedEnum) NameCamel() string {
+	return util.CamelCase(e.Name)
+}
+
+func (e *ParsedEnum) NameUnder() string {
+	return util.UnderCase(e.Name)
+}
+
+func (e *ParsedEnum) NameDash() string {
+	return util.DashCase(e.Name)
+}
+
+func (e *ParsedEnum) ValueString() []string {
 	ret := make([]string, 0, len(e.Values))
 	for _, v := range e.Values {
 		ret = append(ret, v.Name)

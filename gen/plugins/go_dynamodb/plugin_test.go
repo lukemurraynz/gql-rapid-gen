@@ -48,7 +48,7 @@ func TestPlugin_Execute_Simple(t *testing.T) {
 
 	accessRendered := access.String()
 	mockRendered := mock.String()
-	skelRendered := mock.String()
+	skelRendered := skel.String()
 
 	assert.True(t, len(accessRendered) > 100)
 	assert.True(t, len(mockRendered) > 100)
@@ -93,7 +93,7 @@ func TestPlugin_Execute_Composite(t *testing.T) {
 
 	accessRendered := access.String()
 	mockRendered := mock.String()
-	skelRendered := mock.String()
+	skelRendered := skel.String()
 
 	assert.True(t, len(accessRendered) > 100)
 	assert.True(t, len(mockRendered) > 100)
@@ -138,7 +138,7 @@ func TestPlugin_Execute_CompositeNumbers(t *testing.T) {
 
 	accessRendered := access.String()
 	mockRendered := mock.String()
-	skelRendered := mock.String()
+	skelRendered := skel.String()
 
 	assert.True(t, len(accessRendered) > 100)
 	assert.True(t, len(mockRendered) > 100)
@@ -183,7 +183,7 @@ func TestPlugin_Execute_GSI(t *testing.T) {
 
 	accessRendered := access.String()
 	mockRendered := mock.String()
-	skelRendered := mock.String()
+	skelRendered := skel.String()
 
 	assert.True(t, len(accessRendered) > 100)
 	assert.True(t, len(mockRendered) > 100)
@@ -228,7 +228,7 @@ func TestPlugin_Execute_GSIOrdered(t *testing.T) {
 
 	accessRendered := access.String()
 	mockRendered := mock.String()
-	skelRendered := mock.String()
+	skelRendered := skel.String()
 
 	assert.True(t, len(accessRendered) > 100)
 	assert.True(t, len(mockRendered) > 100)
@@ -273,7 +273,7 @@ func TestPlugin_Execute_GSIComposite(t *testing.T) {
 
 	accessRendered := access.String()
 	mockRendered := mock.String()
-	skelRendered := mock.String()
+	skelRendered := skel.String()
 
 	assert.True(t, len(accessRendered) > 100)
 	assert.True(t, len(mockRendered) > 100)

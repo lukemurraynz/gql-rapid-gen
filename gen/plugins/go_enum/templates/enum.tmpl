@@ -4,7 +4,7 @@ import "fmt"
 type {{$.Enum.NameTitle}} string
 
 const (
-{{range $index, $value := $.Values}}
+{{range $index, $value := $.Enum.Values}}
 	{{$.Enum.NameTitle}}_{{$value}} {{$.Enum.NameTitle}} = "{{$value}}"
 {{end}}
 )

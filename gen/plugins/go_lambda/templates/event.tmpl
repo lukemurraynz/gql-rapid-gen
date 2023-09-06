@@ -11,7 +11,7 @@ type {{$.Field.NameTitle}}Return {{$.Field.Type.GoType}}
 
 type {{$.Field.NameTitle}}Arguments struct {
 	{{- range $index, $field := $.Field.Arguments}}
-		{{$field.NameTitle}} {{$field.Type.GoType}} {{$field.Tag}}
+		{{$field.NameTitle}} {{$field.Type.GoType}} {{$field.GoStructTag}}
 	{{- end}}
 }
 
@@ -21,7 +21,7 @@ func ({{$.Field.NameCamel}} *{{$.Field.NameTitle}}Arguments) Validate() error {
 		return fmt.Errorf("{{$.Field.NameTitle}} must not be nil")
 	}
 	{{- range $index, $field := $.Field.Arguments}}
-		{{- if and $field.Collection $field.IsCollectionOfObjects}}
+		{{- if and $field.Type.Collection $field.Type.IsCollectionOfObjects}}
 			{{if eq $field.Required false }}
 				if {{$.Field.NameCamel}}.{{$field.NameTitle}} != nil && len(*{{$.Field.NameCamel}}.{{$field.NameTitle}}) != 0 {
 					for _, item := range *{{$.Field.NameCamel}}.{{$field.NameTitle}} {
@@ -40,7 +40,7 @@ func ({{$.Field.NameCamel}} *{{$.Field.NameTitle}}Arguments) Validate() error {
 				}
 			{{end}}
 		{{- else }}
-			{{- if eq $field.Required true }}
+			{{- if eq $field.Type.Required true }}
 				{{- if or (eq $field.Type.Kind "String") (eq $field.Type.Kind "ID") }}
 					if {{$.Field.NameCamel}}.{{$field.NameTitle}} == "" {
 						return fmt.Errorf("field {{$field.Name}} is required")

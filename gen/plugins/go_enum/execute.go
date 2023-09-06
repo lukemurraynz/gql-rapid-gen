@@ -16,7 +16,7 @@ type data struct {
 func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 
 	for _, o := range schema.Enums {
-		rendered, err := gen.ExecuteTemplate("plugins/go_objects/templates/enum.tmpl", data{
+		rendered, err := gen.ExecuteTemplate("plugins/go_enum/templates/enum.tmpl", data{
 			Enum: o,
 		})
 		if err != nil {

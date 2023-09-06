@@ -5,6 +5,7 @@ package parser
 import (
 	"github.com/mjdrgn/gql-rapid-gen/util"
 	"github.com/vektah/gqlparser/v2/ast"
+	"strings"
 )
 
 type ParsedArgumentDef struct {
@@ -27,6 +28,31 @@ func (pad *ParsedArgumentDef) NameUnder() string {
 
 func (pad *ParsedArgumentDef) NameDash() string {
 	return util.DashCase(pad.Name)
+}
+
+func (pad *ParsedArgumentDef) GoStructTag() string {
+	entries := make([]string, 0, 16)
+	if !pad.Type.Required {
+		entries = append(
+			entries,
+			`json:"`+pad.Name+`,omitempty"`,
+		)
+	} else if pad.Type.Collection {
+		entries = append(
+			entries,
+			`json:"`+pad.Name+`,omitempty"`,
+		)
+	} else if pad.Type.Required {
+		entries = append(
+			entries,
+			`json:"`+pad.Name+`"`,
+		)
+	}
+	if len(entries) > 0 {
+		return "`" + strings.Join(entries, " ") + "`"
+	} else {
+		return ""
+	}
 }
 
 func parseArgumentDef(v *ast.ArgumentDefinition) *ParsedArgumentDef {
