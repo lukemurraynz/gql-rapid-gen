@@ -25,7 +25,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().String("schema", "./schema.graphql", "Primary schema file to process")
 
-	rootCmd.PersistentFlags().StringArray("extra-schema", []string{}, "Additional schema files to parse")
 }

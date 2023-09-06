@@ -34,7 +34,7 @@ func WriteSkeleton(outputDir string) (err error) {
 
 		base := filepath.Base(target)
 		ext := filepath.Ext(target)
-		if ext == "replace" {
+		if ext == ".replace" {
 			target = strings.Replace(target, ".replace", "", 1)
 			ext = filepath.Ext(target)
 		}
