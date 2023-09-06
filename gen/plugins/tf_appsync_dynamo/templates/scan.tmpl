@@ -1,9 +1,9 @@
 
-resource "aws_appsync_resolver" "Query-listAll{{$.scan.plural}}" {
+resource "aws_appsync_resolver" "Query-listAll{{$.Plural}}" {
   api_id      = aws_appsync_graphql_api.backend.id
   type        = "Query"
-  field       = "listAll{{$.scan.plural}}"
-  data_source = aws_appsync_datasource.{{$.base.dynamo.name}}.name
+  field       = "listAll{{$.Plural}}"
+  data_source = aws_appsync_datasource.{{$.Object.NameDash}}.name
 
   request_template = <<EOF
 {

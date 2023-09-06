@@ -12,7 +12,7 @@ resource "aws_appsync_resolver" "Query-{{$.QueryName}}" {
     "query": {
         "expression": "{{$.Field.Name}} = :v",
         "expressionValues": {
-          ":v": $util.dynamodb.toDynamoDBJson($ctx.args.{{$.Field.name}})
+          ":v": $util.dynamodb.toDynamoDBJson($ctx.args.{{$.Field.Name}})
         }
     },
     "scanIndexForward" : {{$.Directive.ArgJS "forward"}},

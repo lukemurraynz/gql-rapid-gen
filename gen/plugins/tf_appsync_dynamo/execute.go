@@ -165,10 +165,14 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 					}
 					queryName := d.Arg("name")
 					if queryName == "" {
-						if d.Arg("using") == "" {
+						if d.Arg("plural") == "" {
 							return fmt.Errorf("appsync_list on %s %s has no name or using", o.Name, f.Name)
 						}
-						queryName = "list" + plural + "By" + util.TitleCase(d.Arg("using"))
+						if d.HasArg("using") {
+							queryName = "list" + plural + "By" + util.TitleCase(d.Arg("using"))
+						} else {
+							queryName = "list" + plural + "By" + hashKey.NameTitle()
+						}
 					}
 
 					rendered, err := gen.ExecuteTemplate("plugins/tf_appsync_dynamo/templates/list.tmpl", listData{

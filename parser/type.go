@@ -24,6 +24,13 @@ var TypeStringReq = &FieldType{
 	CollectionSubtype: nil,
 }
 
+// TypeStringReqCollection is a pre-filled FieldType for a Required String field. This is used primarily for unit testing.
+var TypeStringReqCollection = &FieldType{
+	Required:          true,
+	Collection:        true,
+	CollectionSubtype: TypeStringReq,
+}
+
 // TypeIntReq is a pre-filled FieldType for a Required Int field. This is used primarily for unit testing.
 var TypeIntReq = &FieldType{
 	Kind:              "String",
