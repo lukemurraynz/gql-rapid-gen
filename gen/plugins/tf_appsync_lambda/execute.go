@@ -36,7 +36,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 				return fmt.Errorf("failed rendering Mutation %s: %w", mut.Name, err)
 			}
 
-			_, err = output.AppendOrCreate(gen.TF_API_GEN, mut.NameDash(), rendered)
+			_, err = output.AppendOrCreate(gen.TF_API_GEN, "lambda-"+mut.NameDash(), rendered)
 			if err != nil {
 				return fmt.Errorf("failed appending Mutation %s: %w", mut.Name, err)
 			}
@@ -50,7 +50,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 			return fmt.Errorf("failed rendering Mutation %s: %w", mut.Name, err)
 		}
 
-		_, err = output.AppendOrCreate(gen.TF_API_SKEL, mut.NameDash(), rendered)
+		_, err = output.AppendOrCreate(gen.TF_API_SKEL, "lambda-"+mut.NameDash(), rendered)
 		if err != nil {
 			return fmt.Errorf("failed appending Mutation %s: %w", mut.Name, err)
 		}

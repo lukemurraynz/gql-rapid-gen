@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/mjdrgn/gql-rapid-gen/parser"
 	"golang.org/x/exp/slices"
-	"log"
 )
 
 var plugins = make(map[string]Plugin, 32)
@@ -22,7 +21,6 @@ func RegisterPlugin(name string, p Plugin) {
 		panic(fmt.Sprintf("Name mismatch in Plugin: %s vs %s", p.Name(), name))
 	}
 	plugins[name] = p
-	log.Printf("Plugin Registered: %s", name)
 }
 
 // ListPlugins returns the names of all plugins registered

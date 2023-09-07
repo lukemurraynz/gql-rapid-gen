@@ -30,6 +30,10 @@ type gsiData struct {
 func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 
 	for _, o := range schema.Objects {
+		if o.HasDirective("go_ignore") {
+			continue
+		}
+
 		dynamo := o.SingleDirective("dynamodb")
 		if dynamo == nil {
 			continue

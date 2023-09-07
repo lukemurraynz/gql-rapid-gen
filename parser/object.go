@@ -16,6 +16,31 @@ type ParsedObject struct {
 	Interfaces  []string
 }
 
+func (po *ParsedObject) Validate() error {
+	if po.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	for k, v := range po.Directives {
+		if v == nil {
+			return fmt.Errorf("directive '%s' initialised but no values", k)
+		}
+		for _, d := range v {
+			if d.Name != k {
+				return fmt.Errorf("mismatched directives '%s' and '%s'", k, d.Name)
+			}
+			if err := d.Validate(); err != nil {
+				return fmt.Errorf("directive '%s' failed validate: %w", d.Name, err)
+			}
+		}
+	}
+	for _, f := range po.Fields {
+		if err := f.Validate(); err != nil {
+			return fmt.Errorf("field '%s' failed validate: %w", f.Name, err)
+		}
+	}
+	return nil
+}
+
 func (po *ParsedObject) NameTitle() string {
 	return util.TitleCase(po.Name)
 }

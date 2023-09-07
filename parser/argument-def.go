@@ -3,6 +3,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/mjdrgn/gql-rapid-gen/util"
 	"github.com/vektah/gqlparser/v2/ast"
 	"strings"
@@ -12,6 +13,16 @@ type ParsedArgumentDef struct {
 	Name    string
 	Type    *FieldType
 	Default Value
+}
+
+func (pad *ParsedArgumentDef) Validate() error {
+	if pad.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if pad.Type == nil {
+		return fmt.Errorf("type is nil")
+	}
+	return nil
 }
 
 func (pad *ParsedArgumentDef) NameTitle() string {

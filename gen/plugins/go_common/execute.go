@@ -1,6 +1,6 @@
 // Copyright (c) 2023 under the MIT license per gql-rapid-gen/LICENSE.MD
 
-package go_objects
+package go_common
 
 import (
 	"fmt"
@@ -17,6 +17,10 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 	names := make([]string, 0, len(schema.Objects))
 
 	for _, o := range schema.Objects {
+		if o.HasDirective("go_ignore") {
+			continue
+		}
+
 		if o.HasDirective("dynamodb") {
 			names = append(names, o.NameTitle())
 		}

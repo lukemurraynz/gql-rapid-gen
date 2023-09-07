@@ -73,7 +73,7 @@ func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) Validate() error {
             }
         {{- end}}
         {{- if and $field.Type.Collection $field.Type.IsCollectionOfObjects}}
-            {{if eq $field.Required false }}
+            {{if eq $field.Type.Required false }}
             if {{$.Object.NameCamel}}.{{$field.NameTitle}} != nil && len({{$.Object.NameCamel}}.{{$field.NameTitle}}) != 0 {
                 for _, item := range {{$.Object.NameCamel}}.{{$field.NameTitle}} {
                     if err := item.Validate(); err != nil {

@@ -12,6 +12,13 @@ type ParsedArgument struct {
 	Value Value
 }
 
+func (pa *ParsedArgument) Validate() error {
+	if pa.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	return nil
+}
+
 func parseArgument(v *ast.Argument) *ParsedArgument {
 	return &ParsedArgument{
 		Name:  v.Name,

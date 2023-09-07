@@ -1,6 +1,6 @@
 // {{$.Object.NameTitle}} is a struct representing the graphql object {{$.Object.Name}}
 type {{$.Object.NameTitle}} struct {
-	{{- range $index, $field := $.Object.Fields}}
+	{{- range $index, $field := $.Fields}}
 		{{$field.NameTitle}} {{$field.Type.GoType}} {{$field.GoStructTag}}
 	{{- end}}
 }
@@ -9,9 +9,9 @@ var {{$.Object.NameCamel}}ExtraValidator func(*{{$.Object.NameTitle}}) error
 
 //Validate validates the {{$.Object.Name}} struct
 func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) Validate() error {
-	{{- range $index, $field := $.Object.Fields}}
+	{{- range $index, $field := $.Fields}}
 		{{- if and $field.Type.Collection $field.Type.IsCollectionOfObjects}}
-			{{if eq $field.Required false }}
+			{{if eq $field.Type.Required false }}
 				if {{$.Object.NameCamel}}.{{$field.NameTitle}} != nil && len({{$.Object.NameCamel}}.{{$field.NameTitle}}) != 0 {
 					for _, item := range {{$.Object.NameCamel}}.{{$field.NameTitle}} {
 						if err := item.Validate(); err != nil {

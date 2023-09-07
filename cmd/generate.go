@@ -117,6 +117,13 @@ var generateCmd = &cobra.Command{
 			return
 		}
 
+		err = schema.Validate()
+		if err != nil {
+			cmd.PrintErrf("Schema validation error: \n%s\n", err)
+			os.Exit(2)
+			return
+		}
+
 		if validate {
 			cmd.Println("Validation Successful")
 			return
@@ -167,7 +174,12 @@ var generateCmd = &cobra.Command{
 		if dryRun {
 			cmd.Println("Successfully executed all plugins against schema")
 			files := output.GetFiles()
+			fileNames := make([]string, 0, len(files))
 			for k, _ := range files {
+				fileNames = append(fileNames, k)
+			}
+			slices.Sort(fileNames)
+			for _, k := range fileNames {
 				cmd.Printf("\t- %s\n", k)
 			}
 			return

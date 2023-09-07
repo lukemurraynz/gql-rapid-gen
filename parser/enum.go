@@ -3,6 +3,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/mjdrgn/gql-rapid-gen/util"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -11,6 +12,16 @@ type ParsedEnum struct {
 	Name        string
 	Description string
 	Values      []*EnumValue
+}
+
+func (e *ParsedEnum) Validate() error {
+	if e.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if len(e.Values) == 0 {
+		return fmt.Errorf("enum '%s' has no values", e.Name)
+	}
+	return nil
 }
 
 func (e *ParsedEnum) NameTitle() string {

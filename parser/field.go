@@ -17,6 +17,37 @@ type ParsedField struct {
 	Type        *FieldType
 }
 
+func (pf *ParsedField) Validate() error {
+	if pf.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	for k, v := range pf.Directives {
+		if v == nil {
+			return fmt.Errorf("directive '%s' initialised but no values", k)
+		}
+		for _, d := range v {
+			if d.Name != k {
+				return fmt.Errorf("mismatched directives '%s' and '%s'", k, d.Name)
+			}
+			if err := d.Validate(); err != nil {
+				return fmt.Errorf("directive '%s' failed validate: %w", d.Name, err)
+			}
+		}
+	}
+	for k, v := range pf.Arguments {
+		if v.Name != k {
+			return fmt.Errorf("mismatched argdefs '%s' and '%s'", k, v.Name)
+		}
+		if err := v.Validate(); err != nil {
+			return fmt.Errorf("argdef '%s' failed validate: %w", k, err)
+		}
+	}
+	if err := pf.Type.Validate(); err != nil {
+		return fmt.Errorf("type failed validate: %w", err)
+	}
+	return nil
+}
+
 func (pf *ParsedField) NameTitle() string {
 	return util.TitleCase(pf.Name)
 }

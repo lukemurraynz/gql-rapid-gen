@@ -1,6 +1,6 @@
 // Copyright (c) 2023 under the MIT license per gql-rapid-gen/LICENSE.MD
 
-package go_objects
+package go_common
 
 import (
 	"github.com/mjdrgn/gql-rapid-gen/gen"

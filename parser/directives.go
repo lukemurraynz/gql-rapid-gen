@@ -2,11 +2,21 @@
 
 package parser
 
-import "github.com/vektah/gqlparser/v2/ast"
+import (
+	"fmt"
+	"github.com/vektah/gqlparser/v2/ast"
+)
 
 type ParsedDirective struct {
 	Name      string
 	Arguments map[string]*ParsedArgument
+}
+
+func (pd *ParsedDirective) Validate() error {
+	if pd.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	return nil
 }
 
 func (pd *ParsedDirective) ArgIsNull(key string) bool {

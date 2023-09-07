@@ -97,6 +97,22 @@ func (ft FieldType) IsObject() bool {
 	}
 }
 
+func (ft FieldType) ZeroValueGo() string {
+	if ft.Collection || !ft.Required {
+		return "nil"
+	}
+	switch ft.Kind {
+	case "String", "ID":
+		return "\"\""
+	case "Int", "Long", "Float":
+		return "0"
+	case "Boolean":
+		return "false"
+	default:
+		return "nil"
+	}
+}
+
 func (ft FieldType) GoType() string {
 	if ft.Collection {
 		return "[]" + ft.CollectionSubtype.GoType()
@@ -172,16 +188,18 @@ func (ft FieldType) IsCollectionOfObjects() bool {
 
 // Validate is a validation function for field type object
 func (ft FieldType) Validate() error {
+	if ft.Collection {
+		if ft.CollectionSubtype == nil {
+			return fmt.Errorf("collection subtype is required for collection field type")
+		}
+		return ft.CollectionSubtype.Validate()
+	}
 	if ft.Kind == "" {
 		return fmt.Errorf("field type kind is required")
 	}
-	//validate that ft.Kind is one of the valid kinds
+	// TODO validate that ft.Kind is one of the valid kinds
 
-	if ft.Collection && ft.CollectionSubtype == nil {
-		return fmt.Errorf("collection subtype is required for collection field type")
-	}
-
-	if ft.CollectionSubtype != nil && !ft.Collection {
+	if ft.CollectionSubtype != nil {
 		return fmt.Errorf("collection subtype is only valid for collection field type")
 	}
 

@@ -17,21 +17,52 @@ type data struct {
 func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 
 	for _, mut := range schema.Mutation {
-		if !mut.HasDirective("appsync_lambda") {
+		dir := mut.SingleDirective("appsync_lambda")
+		if dir == nil {
 			continue
 		}
 
-		rendered, err := gen.ExecuteTemplate("plugins/go_lambda/templates/event.tmpl", data{
-			Parent: "Mutation",
-			Field:  mut,
-		})
-		if err != nil {
-			return fmt.Errorf("failed rendering Mutation %s: %w", mut.Name, err)
+		{
+			rendered, err := gen.ExecuteTemplate("plugins/go_lambda/templates/event.tmpl", data{
+				Parent: "Mutation",
+				Field:  mut,
+			})
+			if err != nil {
+				return fmt.Errorf("failed rendering Mutation %s: %w", mut.Name, err)
+			}
+
+			_, err = output.AppendOrCreate(gen.GO_DATA_GEN, "lambda-"+util.DashCase(mut.Name)+"-event", rendered)
+			if err != nil {
+				return fmt.Errorf("failed appending Mutation %s: %w", mut.Name, err)
+			}
 		}
 
-		_, err = output.AppendOrCreate(gen.GO_DATA_GEN, util.DashCase(mut.Name)+"-event", rendered)
-		if err != nil {
-			return fmt.Errorf("failed appending Mutation %s: %w", mut.Name, err)
+		{
+			rendered, err := gen.ExecuteTemplate("plugins/go_lambda/templates/main.go.tmpl", data{
+				Field: mut,
+			})
+			if err != nil {
+				return fmt.Errorf("failed rendering Main %s: %w", mut.Name, err)
+			}
+
+			_, err = output.AppendOrCreate(gen.GO_LAMBDA_SKEL, dir.Arg("path")+"/main", rendered)
+			if err != nil {
+				return fmt.Errorf("failed appending Main %s: %w", mut.Name, err)
+			}
+		}
+
+		{
+			rendered, err := gen.ExecuteTemplate("plugins/go_lambda/templates/mod.tmpl", data{
+				Field: mut,
+			})
+			if err != nil {
+				return fmt.Errorf("failed rendering Main %s: %w", mut.Name, err)
+			}
+
+			_, err = output.AppendOrCreate(gen.GO_LAMBDA_MOD, dir.Arg("path")+"/go", rendered)
+			if err != nil {
+				return fmt.Errorf("failed appending Main %s: %w", mut.Name, err)
+			}
 		}
 	}
 

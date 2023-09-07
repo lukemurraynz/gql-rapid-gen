@@ -11,14 +11,28 @@ import (
 
 type data struct {
 	Object *parser.ParsedObject
+	Fields []*parser.ParsedField
 	Input  bool
 }
 
 func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 
 	for _, o := range schema.Objects {
+		if o.HasDirective("go_ignore") {
+			continue
+		}
+
+		fields := make([]*parser.ParsedField, 0, len(o.Fields))
+		for _, f := range o.Fields {
+			if o.HasDirective("go_ignore") {
+				continue
+			}
+			fields = append(fields, f)
+		}
+
 		rendered, err := gen.ExecuteTemplate("plugins/go_objects/templates/struct.tmpl", data{
 			Object: o,
+			Fields: fields,
 			Input:  false,
 		})
 		if err != nil {
@@ -32,8 +46,21 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 	}
 
 	for _, o := range schema.InputObjects {
+		if o.HasDirective("go_ignore") {
+			continue
+		}
+
+		fields := make([]*parser.ParsedField, 0, len(o.Fields))
+		for _, f := range o.Fields {
+			if o.HasDirective("go_ignore") {
+				continue
+			}
+			fields = append(fields, f)
+		}
+
 		rendered, err := gen.ExecuteTemplate("plugins/go_objects/templates/struct.tmpl", data{
 			Object: o,
+			Fields: fields,
 			Input:  true,
 		})
 		if err != nil {
