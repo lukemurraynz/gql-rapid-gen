@@ -1,18 +1,16 @@
-import "fmt"
-
 // {{$.Enum.NameTitle}} is a struct representing the graphql object {{$.Enum.NameTitle}}
 type {{$.Enum.NameTitle}} string
 
 const (
 {{range $index, $value := $.Enum.Values}}
-	{{$.Enum.NameTitle}}_{{$value}} {{$.Enum.NameTitle}} = "{{$value}}"
+	{{$.Enum.NameTitle}}_{{$value.Name}} {{$.Enum.NameTitle}} = "{{$value.Name}}"
 {{end}}
 )
 
 //Validate validates the {{$.Enum.NameTitle}} struct
 func ({{$.Enum.NameCamel}} {{$.Enum.NameTitle}}) Validate() error {
 	{{range $index, $value := $.Enum.Values}}
-		if {{$.Enum.NameCamel}} == "{{$value}}" {
+		if {{$.Enum.NameCamel}} == "{{$value.Name}}" {
 			return nil
 		}
 	{{end}}

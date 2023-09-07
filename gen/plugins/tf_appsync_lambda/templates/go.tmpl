@@ -129,7 +129,6 @@ resource "aws_lambda_function" "{{$.Parent}}-{{$.Field.Name}}" {
   environment {
     variables = {
       ENVIRONMENT : terraform.workspace
-      HOME_PAGE : "https://${var.web-domain[terraform.workspace]}"
     }
   }
 }

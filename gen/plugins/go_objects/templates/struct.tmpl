@@ -7,33 +7,32 @@ type {{$.Object.NameTitle}} struct {
 
 var {{$.Object.NameCamel}}ExtraValidator func(*{{$.Object.NameTitle}}) error
 
-//Validate validates the {{$.Object.Name}} struct
+//Validate validates the {{$.Object.NameTitle}} struct
 func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) Validate() error {
-	{{- range $index, $field := $.Fields}}
-		{{- if and $field.Type.Collection $field.Type.IsCollectionOfObjects}}
-			{{if eq $field.Type.Required false }}
-				if {{$.Object.NameCamel}}.{{$field.NameTitle}} != nil && len({{$.Object.NameCamel}}.{{$field.NameTitle}}) != 0 {
-					for _, item := range {{$.Object.NameCamel}}.{{$field.NameTitle}} {
-						if err := item.Validate(); err != nil {
-							return err
-						}
-					}
-				}
-			{{else}}
-				if len({{$.Object.NameCamel}}.{{$field.NameTitle}}) != 0 {
-					for _, item := range {{$.Object.NameCamel}}.{{$field.NameTitle}} {
-						if err := item.Validate(); err != nil {
-							return err
-						}
-					}
-				}
-			{{end}}
-		{{- end}}
-	{{- end}}
+    {{- range $index, $field := $.Fields}}
+        {{- if and $field.Type.Collection $field.Type.IsCollectionOfObjects}}
+            {{if eq $field.Type.Required false }}
+            if {{$.Object.NameCamel}}.{{$field.NameTitle}} != nil && len({{$.Object.NameCamel}}.{{$field.NameTitle}}) != 0 {
+                for _, item := range {{$.Object.NameCamel}}.{{$field.NameTitle}} {
+                    if err := item.Validate(); err != nil {
+                        return err
+                    }
+                }
+            }
+            {{else}}
+            if len({{$.Object.NameCamel}}.{{$field.NameTitle}}) != 0 {
+                for _, item := range {{$.Object.NameCamel}}.{{$field.NameTitle}} {
+                    if err := item.Validate(); err != nil {
+                        return err
+                    }
+                }
+            }
+            {{end}}
+        {{- end}}
+    {{- end}}
 
-	if {{$.Object.NameCamel}}ExtraValidator != nil {
-		return {{$.Object.NameCamel}}ExtraValidator({{$.Object.NameCamel}})
-	}
-
-	return nil
+    if {{$.Object.NameCamel}}ExtraValidator != nil {
+        return {{$.Object.NameCamel}}ExtraValidator({{$.Object.NameCamel}})
+    }
+    return nil
 }

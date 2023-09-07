@@ -45,8 +45,8 @@ directive @appsync_foreign_key(
 directive @appsync_lambda(
     language: String!
     path: String!
-    timeout: String
-    memory: String
+    timeout: String!
+    memory: String!
 ) on FIELD_DEFINITION
 directive @crud_type(
     render: String # Renderer to use in display / grids / etc

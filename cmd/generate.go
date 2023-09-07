@@ -6,6 +6,7 @@ import (
 	"github.com/mjdrgn/gql-rapid-gen/gen"
 	"github.com/mjdrgn/gql-rapid-gen/parser"
 	"golang.org/x/exp/slices"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -162,6 +163,10 @@ var generateCmd = &cobra.Command{
 			return
 		}
 
+		for _, p := range filteredPlugins {
+			log.Printf("Using plugin: %s", p.Name())
+		}
+
 		output := &gen.Output{}
 
 		err = gen.ExecuteSchema(filteredPlugins, schema, output)
@@ -175,7 +180,8 @@ var generateCmd = &cobra.Command{
 			cmd.Println("Successfully executed all plugins against schema")
 			files := output.GetFiles()
 			fileNames := make([]string, 0, len(files))
-			for k, _ := range files {
+			for k, f := range files {
+				_, err = f.Render()
 				fileNames = append(fileNames, k)
 			}
 			slices.Sort(fileNames)

@@ -24,6 +24,7 @@ var Types = map[string]Type{
 		GenerateIfEmpty: false,
 		Overwrite:       true,
 		DirectoryPrefix: "lib/data/",
+		ExtraDataRender: goImports,
 	},
 	GO_DATA_SKEL: {
 		Header: `package data
@@ -36,6 +37,7 @@ var Types = map[string]Type{
 		GenerateIfEmpty: true,
 		Overwrite:       false,
 		DirectoryPrefix: "lib/data/",
+		ExtraDataRender: goImports,
 	},
 	GO_LAMBDA_SKEL: {
 		Header: `package main
@@ -67,6 +69,7 @@ var Types = map[string]Type{
 		GenerateIfEmpty: false,
 		Overwrite:       true,
 		DirectoryPrefix: "frontend/gen/",
+		ExtraDataRender: tsImports,
 	},
 	TF_API_GEN: {
 		Header: `
@@ -97,6 +100,7 @@ type Type struct {
 	Extension       string
 	DirectoryPrefix string
 	Format          func(string) (string, error)
+	ExtraDataRender func(file *OutputFile) error
 	GenerateIfEmpty bool
 	Overwrite       bool
 }

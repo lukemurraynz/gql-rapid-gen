@@ -17,7 +17,11 @@ import (
 var skeletonFiles embed.FS
 
 func WriteSkeleton(outputDir string) (err error) {
-	err = fs.WalkDir(skeletonFiles, ".", func(path string, d fs.DirEntry, err error) error {
+	files, err := fs.Sub(skeletonFiles, "skeleton")
+	if err != nil {
+		panic(err) // Compilation fault
+	}
+	err = fs.WalkDir(files, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -42,17 +46,12 @@ func WriteSkeleton(outputDir string) (err error) {
 			target = strings.Replace(target, "gitkeep", ".gitkeep", 1)
 		}
 
-		srcFile, err := fs.ReadFile(skeletonFiles, path)
+		srcFile, err := fs.ReadFile(files, path)
 		if err != nil {
 			return fmt.Errorf("failed reading skeleton file '%s': %w", path, err)
 		}
 
-		info, err := d.Info()
-		if err != nil {
-			return fmt.Errorf("failed getting info for skeleton file '%s': %w", path, err)
-		}
-
-		err = os.WriteFile(target, srcFile, info.Mode())
+		err = os.WriteFile(target, srcFile, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("failed writing skeleton file '%s': %w", path, err)
 		}

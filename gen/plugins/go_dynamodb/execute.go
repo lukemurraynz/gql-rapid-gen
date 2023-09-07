@@ -75,10 +75,19 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 				return fmt.Errorf("failed rendering access: %w", err)
 			}
 
-			_, err = output.AppendOrCreate(gen.GO_DATA_GEN, o.NameDash(), rendered)
+			of, err := output.AppendOrCreate(gen.GO_DATA_GEN, o.NameDash(), rendered)
 			if err != nil {
 				return fmt.Errorf("failed appending access: %w", err)
 			}
+			of.AddExtraData(
+				"context",
+				"fmt",
+				"github.com/aws/aws-sdk-go-v2/aws",
+				"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue",
+				"github.com/aws/aws-sdk-go-v2/service/dynamodb",
+				"github.com/aws/aws-sdk-go-v2/service/dynamodb/types",
+				"lib/config",
+			)
 		}
 
 		{
@@ -93,10 +102,18 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 				return fmt.Errorf("failed rendering mock: %w", err)
 			}
 
-			_, err = output.AppendOrCreate(gen.GO_DATA_GEN, o.NameDash()+".mock", rendered)
+			of, err := output.AppendOrCreate(gen.GO_DATA_GEN, o.NameDash()+".mock", rendered)
 			if err != nil {
 				return fmt.Errorf("failed appending mock: %w", err)
 			}
+			of.AddExtraData(
+				"context",
+				"fmt",
+				"sort",
+				"github.com/aws/aws-sdk-go-v2/aws",
+				"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue",
+				"github.com/aws/aws-sdk-go-v2/service/dynamodb/types",
+			)
 		}
 
 		{

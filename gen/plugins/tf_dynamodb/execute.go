@@ -60,6 +60,14 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 			}
 		}
 
+		// Fix up attributes which are type M, when they should be S.
+		// This may mean we deploy code that doesn't work, if someone puts an Object as a key, however it fixes the more common case of Enums.
+		for k, v := range atts {
+			if v == "M" {
+				atts[k] = "S"
+			}
+		}
+
 		rendered, err := gen.ExecuteTemplate("plugins/tf_dynamodb/templates/ddb.tmpl", data{
 			Object:     o,
 			Dynamo:     dynamo,
@@ -73,7 +81,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 			return fmt.Errorf("failed rendering Object %s: %w", o.Name, err)
 		}
 
-		_, err = output.AppendOrCreate(gen.TF_API_GEN, util.DashCase(o.Name), rendered)
+		_, err = output.AppendOrCreate(gen.TF_API_GEN, "ddb-"+util.DashCase(o.Name), rendered)
 		if err != nil {
 			return fmt.Errorf("failed appending Object %s: %w", o.Name, err)
 		}

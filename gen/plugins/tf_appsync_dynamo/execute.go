@@ -69,7 +69,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 				return fmt.Errorf("failed rendering datasource %s: %w", o.Name, err)
 			}
 
-			_, err = output.AppendOrCreate(gen.TF_API_GEN, util.DashCase(o.Name), rendered)
+			_, err = output.AppendOrCreate(gen.TF_API_GEN, "ddb-"+util.DashCase(o.Name), rendered)
 			if err != nil {
 				return fmt.Errorf("failed appending datasource %s: %w", o.Name, err)
 			}
@@ -90,7 +90,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 				return fmt.Errorf("failed rendering Scan %s: %w", o.Name, err)
 			}
 
-			_, err = output.AppendOrCreate(gen.TF_API_GEN, util.DashCase(o.Name), rendered)
+			_, err = output.AppendOrCreate(gen.TF_API_GEN, "ddb-"+util.DashCase(o.Name)+"-list", rendered)
 			if err != nil {
 				return fmt.Errorf("failed appending Scan %s: %w", o.Name, err)
 			}
@@ -113,7 +113,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 					return fmt.Errorf("failed rendering CRUD create %s: %w", o.Name, err)
 				}
 
-				_, err = output.AppendOrCreate(gen.TF_API_GEN, util.DashCase(o.Name), rendered)
+				_, err = output.AppendOrCreate(gen.TF_API_GEN, "ddb-"+util.DashCase(o.Name)+"-crud", rendered)
 				if err != nil {
 					return fmt.Errorf("failed appending CRUD create %s: %w", o.Name, err)
 				}
@@ -125,7 +125,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 					return fmt.Errorf("failed rendering CRUD read %s: %w", o.Name, err)
 				}
 
-				_, err = output.AppendOrCreate(gen.TF_API_GEN, util.DashCase(o.Name), rendered)
+				_, err = output.AppendOrCreate(gen.TF_API_GEN, "ddb-"+util.DashCase(o.Name)+"-crud", rendered)
 				if err != nil {
 					return fmt.Errorf("failed appending CRUD read %s: %w", o.Name, err)
 				}
@@ -137,7 +137,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 					return fmt.Errorf("failed rendering CRUD update %s: %w", o.Name, err)
 				}
 
-				_, err = output.AppendOrCreate(gen.TF_API_GEN, util.DashCase(o.Name), rendered)
+				_, err = output.AppendOrCreate(gen.TF_API_GEN, "ddb-"+util.DashCase(o.Name)+"-crud", rendered)
 				if err != nil {
 					return fmt.Errorf("failed appending CRUD update %s: %w", o.Name, err)
 				}
@@ -149,7 +149,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 					return fmt.Errorf("failed rendering CRUD delete %s: %w", o.Name, err)
 				}
 
-				_, err = output.AppendOrCreate(gen.TF_API_GEN, util.DashCase(o.Name), rendered)
+				_, err = output.AppendOrCreate(gen.TF_API_GEN, "ddb-"+util.DashCase(o.Name)+"-crud", rendered)
 				if err != nil {
 					return fmt.Errorf("failed appending CRUD delete %s: %w", o.Name, err)
 				}
@@ -185,7 +185,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 						return fmt.Errorf("failed rendering List %s %s: %w", o.Name, f.Name, err)
 					}
 
-					_, err = output.AppendOrCreate(gen.TF_API_GEN, util.DashCase(o.Name), rendered)
+					_, err = output.AppendOrCreate(gen.TF_API_GEN, "ddb-"+util.DashCase(o.Name)+"-list", rendered)
 					if err != nil {
 						return fmt.Errorf("failed appending List %s %s: %w", o.Name, f.Name, err)
 					}
@@ -224,7 +224,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 						return fmt.Errorf("failed rendering Foreign Key %s %s: %w", o.Name, f.Name, err)
 					}
 
-					_, err = output.AppendOrCreate(gen.TF_API_GEN, util.DashCase(o.Name), rendered)
+					_, err = output.AppendOrCreate(gen.TF_API_GEN, "ddb-"+util.DashCase(o.Name)+"-fkey", rendered)
 					if err != nil {
 						return fmt.Errorf("failed appending Foreign Key %s %s: %w", o.Name, f.Name, err)
 					}

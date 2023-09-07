@@ -33,10 +33,11 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 		return fmt.Errorf("failed rendering providers: %w", err)
 	}
 
-	_, err = output.AppendOrCreate(gen.GO_DATA_GEN, "providers", rendered)
+	of, err := output.AppendOrCreate(gen.GO_DATA_GEN, "providers", rendered)
 	if err != nil {
 		return fmt.Errorf("failed appending providers: %w", err)
 	}
+	of.AddExtraData("context", "github.com/aws/aws-sdk-go-v2/config", "github.com/aws/aws-sdk-go-v2/service/dynamodb")
 
 	return nil
 }

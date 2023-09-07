@@ -23,10 +23,11 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 			return fmt.Errorf("failed rendering Enum %s: %w", o.Name, err)
 		}
 
-		_, err = output.AppendOrCreate(gen.GO_DATA_GEN, util.DashCase(o.Name), rendered)
+		of, err := output.AppendOrCreate(gen.GO_DATA_GEN, util.DashCase(o.Name), rendered)
 		if err != nil {
 			return fmt.Errorf("failed appending Enum %s: %w", o.Name, err)
 		}
+		of.AddExtraData("fmt")
 	}
 
 	return nil

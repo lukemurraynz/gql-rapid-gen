@@ -15,7 +15,10 @@ func (o *Output) Write(outputDir string) (err error) {
 	for name, f := range o.files {
 		filename := filepath.Join(outputDir, name)
 
-		content := f.String()
+		content, err := f.Render()
+		if err != nil {
+			return fmt.Errorf("failed rendering file '%s': %w", name, err)
+		}
 
 		if len(content) == 0 && !f.generateIfEmpty {
 			log.Printf("Not generating %s as empty file", name)
@@ -33,8 +36,9 @@ func (o *Output) Write(outputDir string) (err error) {
 		ref, err := os.OpenFile(filename, flags, fs.ModePerm)
 		if err != nil {
 			if !f.overwrite && errors.Is(err, fs.ErrExist) {
+				log.Printf("Skipping file '%s' as already exists and no overwrite", name)
 				// We don't overwrite these files, so silently ignore
-				return nil
+				continue
 			}
 			return fmt.Errorf("failed opening file %s: %w", name, err)
 		}

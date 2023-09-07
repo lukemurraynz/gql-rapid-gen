@@ -12,7 +12,7 @@ func (p *Plugin) Name() string {
 }
 
 func (p *Plugin) Order() int {
-	return -100
+	return 0
 }
 
 func init() {

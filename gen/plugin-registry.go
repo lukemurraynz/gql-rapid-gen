@@ -47,10 +47,17 @@ func ExecuteSchema(list []Plugin, schema *parser.Schema, output *Output) error {
 	var errs []error
 
 	slices.SortFunc(list, func(a Plugin, b Plugin) int {
-		return a.Order() - b.Order()
+		if a.Order() == b.Order() {
+			if a.Name() < b.Name() {
+				return -1
+			} else {
+				return 1
+			}
+		}
+		return b.Order() - a.Order()
 	})
 
-	for _, p := range plugins {
+	for _, p := range list {
 		err := p.Generate(schema, output)
 		if err != nil {
 			errs = append(errs, err)

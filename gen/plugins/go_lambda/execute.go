@@ -31,10 +31,11 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 				return fmt.Errorf("failed rendering Mutation %s: %w", mut.Name, err)
 			}
 
-			_, err = output.AppendOrCreate(gen.GO_DATA_GEN, "lambda-"+util.DashCase(mut.Name)+"-event", rendered)
+			of, err := output.AppendOrCreate(gen.GO_DATA_GEN, "lambda-"+util.DashCase(mut.Name)+"-event", rendered)
 			if err != nil {
 				return fmt.Errorf("failed appending Mutation %s: %w", mut.Name, err)
 			}
+			of.AddExtraData("fmt")
 		}
 
 		{
@@ -79,10 +80,11 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 			return fmt.Errorf("failed rendering Query %s: %w", mut.Name, err)
 		}
 
-		_, err = output.AppendOrCreate(gen.GO_DATA_GEN, util.DashCase(mut.Name)+"-event", rendered)
+		of, err := output.AppendOrCreate(gen.GO_DATA_GEN, util.DashCase(mut.Name)+"-event", rendered)
 		if err != nil {
 			return fmt.Errorf("failed appending Query %s: %w", mut.Name, err)
 		}
+		of.AddExtraData("fmt")
 	}
 
 	return nil

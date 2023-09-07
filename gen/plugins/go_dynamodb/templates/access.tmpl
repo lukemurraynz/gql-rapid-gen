@@ -1,13 +1,3 @@
-import (
-    "context"
-    "fmt"
-    "github.com/aws/aws-sdk-go-v2/aws"
-    "github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-    "github.com/aws/aws-sdk-go-v2/service/dynamodb"
-    "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-    "lib/config"
-)
-
 type {{$.Object.NameCamel}}ProviderBase interface {
 
 {{- if $.HasSort}}
@@ -56,47 +46,6 @@ func init{{$.Object.NameTitle}}Provider(db *dynamodb.Client) {
 
 func Get{{$.Object.NameTitle}}Provider() {{$.Object.NameTitle}}Provider {
     return {{$.Object.NameCamel}}ProviderSingleton
-}
-
-var {{$.Object.NameCamel}}ExtraValidator func(*{{$.Object.NameTitle}}) error
-
-//Validate validates the {{$.Object.NameTitle}} struct
-func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) Validate() error {
-    {{- range $index, $field := $.Fields}}
-        {{- if or (eq $field.Name $.HashKey.Name) (and $.HasSort (eq $field.Name $.SortKey.Name))}}
-            {{- if eq $field.Type.DynamoType "S"}}
-            if {{$.Object.NameCamel}}.{{$field.NameTitle}} == "" {
-            {{- else if eq $field.Type.DynamoType "N"}}
-            if {{$.Object.NameCamel}}.{{$field.NameTitle}} == 0 {
-            {{- end}}
-                return fmt.Errorf("key field {{$.Object.NameTitle}}.{{$field.Name}} is required")
-            }
-        {{- end}}
-        {{- if and $field.Type.Collection $field.Type.IsCollectionOfObjects}}
-            {{if eq $field.Type.Required false }}
-            if {{$.Object.NameCamel}}.{{$field.NameTitle}} != nil && len({{$.Object.NameCamel}}.{{$field.NameTitle}}) != 0 {
-                for _, item := range {{$.Object.NameCamel}}.{{$field.NameTitle}} {
-                    if err := item.Validate(); err != nil {
-                        return err
-                    }
-                }
-            }
-            {{else}}
-            if len({{$.Object.NameCamel}}.{{$field.NameTitle}}) != 0 {
-                for _, item := range {{$.Object.NameCamel}}.{{$field.NameTitle}} {
-                    if err := item.Validate(); err != nil {
-                        return err
-                    }
-                }
-            }
-            {{end}}
-        {{- end}}
-    {{- end}}
-
-    if {{$.Object.NameCamel}}ExtraValidator != nil {
-        return {{$.Object.NameCamel}}ExtraValidator({{$.Object.NameCamel}})
-    }
-    return nil
 }
 
 func ({{$.Object.NameCamel}} *{{$.Object.NameTitle}}) key() map[string]types.AttributeValue {
@@ -380,9 +329,15 @@ func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}(ctx context.Cont
                 "{{$.HashKey.Name}}": {
                     ComparisonOperator: types.ComparisonOperatorEq,
                     AttributeValueList: []types.AttributeValue{
+    {{if $.HashKey.Type.IsObject}}
+                        &types.AttributeValueMemberS{
+                            Value: {{$.HashKey.NameCamel}}.String(),
+                        },
+    {{else}}
                         &types.AttributeValueMember{{$.HashKey.Type.DynamoType}}{
                             Value: {{$.HashKey.NameCamel}},
                         },
+    {{end}}
                     },
                 },
             },
@@ -422,17 +377,29 @@ func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}By{{$gsi.NameTitl
                 "{{$gsi.HashKey.Name}}": {
                     ComparisonOperator: types.ComparisonOperatorEq,
                     AttributeValueList: []types.AttributeValue{
+{{if $gsi.HashKey.Type.IsObject}}
+                        &types.AttributeValueMemberS{
+                            Value: {{$gsi.HashKey.NameCamel}}.String(),
+                        },
+{{else}}
                         &types.AttributeValueMember{{$gsi.HashKey.Type.DynamoType}}{
                             Value: {{$gsi.HashKey.NameCamel}},
                         },
+{{end}}
                     },
                 },
                 "{{$gsi.SortKey.Name}}": {
                     ComparisonOperator: types.ComparisonOperatorEq,
                     AttributeValueList: []types.AttributeValue{
+{{if $gsi.SortKey.Type.IsObject}}
+                        &types.AttributeValueMemberS{
+                            Value: {{$gsi.SortKey.NameCamel}}.String(),
+                        },
+{{else}}
                         &types.AttributeValueMember{{$gsi.SortKey.Type.DynamoType}}{
                             Value: {{$gsi.SortKey.NameCamel}},
                         },
+{{end}}
                     },
                 },
             },
@@ -469,9 +436,15 @@ func (p *{{$.Object.NameTitle}}Impl) List{{$.Object.NameTitle}}By{{$gsi.HashKey.
                 "{{$gsi.HashKey.Name}}": {
                     ComparisonOperator: types.ComparisonOperatorEq,
                     AttributeValueList: []types.AttributeValue{
+{{if $gsi.HashKey.Type.IsObject}}
+                        &types.AttributeValueMemberS{
+                            Value: {{$gsi.HashKey.NameCamel}}.String(),
+                        },
+{{else}}
                         &types.AttributeValueMember{{$gsi.HashKey.Type.DynamoType}}{
                             Value: {{$gsi.HashKey.NameCamel}},
                         },
+{{end}}
                     },
                 },
             },
