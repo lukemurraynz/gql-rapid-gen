@@ -11,7 +11,7 @@ func goImports(of *OutputFile) (err error) {
 	}
 
 	slices.Sort(of.extraData)
-	slices.Compact(of.extraData)
+	of.extraData = slices.Compact(of.extraData)
 
 	builder := &strings.Builder{}
 	builder.WriteString("import (\n")

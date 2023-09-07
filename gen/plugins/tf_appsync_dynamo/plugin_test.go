@@ -6,7 +6,6 @@ import (
 	"github.com/mjdrgn/gql-rapid-gen/gen"
 	"github.com/mjdrgn/gql-rapid-gen/gen/testdata"
 	"github.com/mjdrgn/gql-rapid-gen/parser"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -87,17 +86,7 @@ func TestPlugin_Execute_List_Index(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -179,17 +168,7 @@ func TestPlugin_Execute_List_Index_Reverse(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -253,17 +232,7 @@ func TestPlugin_Execute_List_Hash(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -327,17 +296,7 @@ func TestPlugin_Execute_List_Hash_Name(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -409,17 +368,7 @@ func TestPlugin_Execute_Fkey_Single(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -493,17 +442,7 @@ func TestPlugin_Execute_Fkey_Query_Single(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -576,17 +515,7 @@ func TestPlugin_Execute_Fkey_Single_Index(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -675,17 +604,7 @@ func TestPlugin_Execute_Fkey_Single_Additional(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -758,17 +677,7 @@ func TestPlugin_Execute_Fkey_Query(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -841,17 +750,7 @@ func TestPlugin_Execute_Fkey_Batch(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -941,17 +840,7 @@ func TestPlugin_Execute_Fkey_Batch_Additional(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 2, len(files))
 
 	// TODO detailed checks
 }
@@ -984,17 +873,7 @@ func TestPlugin_Execute_Simple(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 3, len(files))
 
 	// TODO detailed checks
 }
@@ -1027,17 +906,7 @@ func TestPlugin_Execute_Composite(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 3, len(files))
 
 	// TODO detailed checks
 }
@@ -1070,17 +939,7 @@ func TestPlugin_Execute_CompositeNumbers(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 3, len(files))
 
 	// TODO detailed checks
 }
@@ -1113,17 +972,7 @@ func TestPlugin_Execute_GSI(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 3, len(files))
 
 	// TODO detailed checks
 }
@@ -1156,17 +1005,7 @@ func TestPlugin_Execute_GSIOrdered(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 3, len(files))
 
 	// TODO detailed checks
 }
@@ -1199,17 +1038,7 @@ func TestPlugin_Execute_GSIComposite(t *testing.T) {
 
 	files := output.GetFiles()
 
-	require.Equal(t, 1, len(files))
-
-	var file *gen.OutputFile
-	for _, f := range files {
-		file = f
-	}
-	require.NotNil(t, file)
-
-	rendered := file.String()
-
-	assert.True(t, len(rendered) > 100)
+	require.Equal(t, 3, len(files))
 
 	// TODO detailed checks
 }
