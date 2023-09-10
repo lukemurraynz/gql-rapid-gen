@@ -11,12 +11,16 @@ func main() {
 	lambda.Start(Handler)
 }
 
+{{if ($.Field.Type.IsObject)}}
+func Handler(ctx context.Context, reqRaw *data.{{$.Field.NameTitle}}Event) (ret *data.{{$.Field.NameTitle}}Return, err error) {
+{{else}}
 func Handler(ctx context.Context, reqRaw *data.{{$.Field.NameTitle}}Event) (ret data.{{$.Field.NameTitle}}Return, err error) {
+{{end}}
 	log.Printf("{{$.Field.NameTitle}} called")
 
 	spew.Dump(reqRaw)
 
 	// TODO implement lambda function
 
-	return {{$.Field.Type.ZeroValueGo}}, fmt.Errorf("Not Implemented")
+	return {{$.Field.Type.ZeroValueGo}}, fmt.Errorf("not implemented")
 }

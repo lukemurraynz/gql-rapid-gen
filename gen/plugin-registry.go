@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/mjdrgn/gql-rapid-gen/parser"
 	"golang.org/x/exp/slices"
+	"log"
 )
 
 var plugins = make(map[string]Plugin, 32)
@@ -58,6 +59,7 @@ func ExecuteSchema(list []Plugin, schema *parser.Schema, output *Output) error {
 	})
 
 	for _, p := range list {
+		log.Printf("Executing plugin %s", p.Name())
 		err := p.Generate(schema, output)
 		if err != nil {
 			errs = append(errs, err)

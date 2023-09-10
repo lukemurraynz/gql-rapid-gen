@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/mjdrgn/gql-rapid-gen/gen"
 	"github.com/mjdrgn/gql-rapid-gen/parser"
+	"golang.org/x/exp/slices"
 )
 
 type data struct {
@@ -25,6 +26,8 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 			names = append(names, o.NameTitle())
 		}
 	}
+
+	slices.Sort(names)
 
 	rendered, err := gen.ExecuteTemplate("plugins/go_common/templates/providers.tmpl", data{
 		ProviderNames: names,

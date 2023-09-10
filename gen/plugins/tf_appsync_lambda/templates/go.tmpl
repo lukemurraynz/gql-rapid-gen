@@ -80,19 +80,19 @@ resource "aws_iam_role_policy_attachment" "lambda-{{$.Parent}}-{{$.Field.Name}}-
 
 data "archive_file" "lambda-{{$.Parent}}-{{$.Field.Name}}-source" {
   type        = "zip"
-  output_path = "${path.module}/lambda_functions/build/src/{{$.Directive.Arg "path"}}.zip"
-  source_dir  = "${path.module}/lambda_functions/{{$.Directive.Arg "path"}}/"
+  output_path = "${path.module}/lambda/build/src/{{$.Directive.Arg "path"}}.zip"
+  source_dir  = "${path.module}/lambda/{{$.Directive.Arg "path"}}/"
 }
 
 resource "null_resource" "lambda-{{$.Parent}}-{{$.Field.Name}}-compile" {
   triggers = {
     source_hash = data.archive_file.lambda-{{$.Parent}}-{{$.Field.Name}}-source.output_base64sha256
-    lib_hash = data.archive_file.lambda-lib-source.output_base64sha256
+    lib_hash = var.lib-hash
     always_run = timestamp()
   }
 
   provisioner "local-exec" {
-    working_dir = "${path.module}/lambda_functions/{{$.Directive.Arg "path"}}/"
+    working_dir = "${path.module}/lambda/{{$.Directive.Arg "path"}}/"
     environment = {
       GOOS    = "linux"
       GOARCH  = "arm64"
@@ -104,8 +104,8 @@ resource "null_resource" "lambda-{{$.Parent}}-{{$.Field.Name}}-compile" {
 
 data "archive_file" "lambda-{{$.Parent}}-{{$.Field.Name}}" {
   type        = "zip"
-  output_path = "${path.module}/lambda_functions/{{$.Directive.Arg "path"}}_${terraform.workspace}.zip"
-  source_file = "${path.module}/lambda_functions/build/${terraform.workspace}/{{$.Directive.Arg "path"}}/bootstrap"
+  output_path = "${path.module}/lambda/build/${terraform.workspace}/{{$.Directive.Arg "path"}}_${terraform.workspace}.zip"
+  source_file = "${path.module}/lambda/build/${terraform.workspace}/{{$.Directive.Arg "path"}}/bootstrap"
 
   depends_on = [
     null_resource.lambda-{{$.Parent}}-{{$.Field.Name}}-compile
