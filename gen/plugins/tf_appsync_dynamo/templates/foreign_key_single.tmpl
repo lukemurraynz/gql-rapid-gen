@@ -6,19 +6,19 @@ resource "aws_appsync_resolver" "{{$.Object.Name}}-{{$.Field.Name}}" {
   data_source = aws_appsync_datasource.{{$.Table}}.name
 
   request_template = <<EOF
-#if($util.isNullOrEmpty($context.source.{{$.FieldSource}}))
+#if($util.isNullOrEmpty($context.source.{{$.FieldSource.Name}}))
     #return
 #end
 {{- if $.Security }}
-#if($util.str.toLower($context.source.{{$.Security.MatchField.Name}}) == $util.str.toLower($context.identity.claims["{{$.Security.UserClaim}}"]){{- if $.Security.OverrideGroups}} {{- range $.Security.OverrideGroups}} || $ctx.identity.claims["cognito:groups"].contains("{{.}}") {{- end}} {{- end}})
+#if({{$.Security.MatchField.NormaliseVTL (print "$context.source." $.Security.MatchField.Name)}} == {{$.Security.MatchField.NormaliseVTL (print "$context.identity.claims[\"" $.Security.UserClaim "\"]")}} {{- if $.Security.OverrideGroups}} {{- range $.Security.OverrideGroups}} || $ctx.identity.claims["cognito:groups"].contains("{{.}}") {{- end}} {{- end}})
 {{- end }}
 {
     "version": "2017-02-28",
     "operation": "GetItem",
     "key": {
-        "{{$.FieldForeign}}": $util.dynamodb.toDynamoDBJson($context.source.{{$.FieldSource}}),
+        "{{$.FieldForeign}}": $util.dynamodb.toDynamoDBJson({{$.FieldSource.NormaliseVTL (print "$context.source." $.FieldSource.Name)}}),
 {{- if $.AdditionalFieldSource }}
-        "{{$.AdditionalFieldForeign}}": $util.dynamodb.toDynamoDBJson($context.source.{{$.AdditionalFieldSource}}),
+        "{{$.AdditionalFieldForeign}}": $util.dynamodb.toDynamoDBJson({{$.AdditionalFieldSource.NormaliseVTL (print "$context.source." $.AdditionalFieldSource.Name)}}),
 {{- end }}
     },
 {{- if $.Index }}

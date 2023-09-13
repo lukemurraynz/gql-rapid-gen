@@ -32,11 +32,11 @@ type fkeyData struct {
 	Query                  bool
 	QuerySingle            bool
 	Batch                  bool
-	FieldSource            string
+	FieldSource            *parser.ParsedField
 	FieldForeign           string
 	Table                  string
 	Index                  string
-	AdditionalFieldSource  string
+	AdditionalFieldSource  *parser.ParsedField
 	AdditionalFieldForeign string
 	Security               *fkeySecurity
 }
@@ -230,11 +230,11 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 						Query:                  d.ArgBool("query"),
 						QuerySingle:            d.ArgBool("query_single"),
 						Batch:                  d.ArgBool("batch"),
-						FieldSource:            d.Arg("field_source"),
+						FieldSource:            o.Field(d.Arg("field_source")),
 						FieldForeign:           d.Arg("field_foreign"),
 						Table:                  d.Arg("table"),
 						Index:                  d.Arg("index"),
-						AdditionalFieldSource:  d.Arg("additional_field_source"),
+						AdditionalFieldSource:  o.Field(d.Arg("additional_field_source")),
 						AdditionalFieldForeign: d.Arg("additional_field_foreign"),
 						Security:               sec,
 					})

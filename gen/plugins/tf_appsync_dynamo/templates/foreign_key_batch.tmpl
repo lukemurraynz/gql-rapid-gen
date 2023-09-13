@@ -6,11 +6,14 @@ resource "aws_appsync_resolver" "{{$.Object.Name}}-{{$.Field.Name}}" {
   data_source = aws_appsync_datasource.{{$.Table}}.name
 
   request_template = <<EOF
-#if(!$context.source.{{$.FieldSource}} || $context.source.{{$.FieldSource}}.size() == 0)
+#if(!$context.source.{{$.FieldSource.Name}} || $context.source.{{$.FieldSource.Name}}.size() == 0)
     #return([])
 #else
 #set($ids = [])
-#foreach($id in $${context.source.{{$.FieldSource}}})
+#foreach($id in $${context.source.{{$.FieldSource.Name}}})
+    {{- if $.FieldSource.HasDirective "normalise"}}
+    #set($id = {{$.FieldSource.NormaliseVTL "$id"}})
+    {{- end}}
     #set($map = {})
     $util.qr($map.put("{{$.FieldForeign}}", $util.dynamodb.toString($id)))
     $util.qr($ids.add($map))

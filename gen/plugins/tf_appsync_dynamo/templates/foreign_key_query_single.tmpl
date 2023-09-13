@@ -14,17 +14,13 @@ resource "aws_appsync_resolver" "{{$.Object.Name}}-{{$.Field.Name}}" {
 {{- if not $.AdditionalFieldSource }}
         "expression": "{{$.FieldForeign}} = :v",
         "expressionValues": {
-{{- if and (eq $.Table "user") (eq $.FieldForeign "email") }}
-          ":v": $util.dynamodb.toDynamoDBJson($util.str.toLower($context.source.{{$.FieldSource}}))
-{{- else }}
-          ":v": $util.dynamodb.toDynamoDBJson($context.source.{{$.FieldSource}})
-{{- end }}
+          ":v": $util.dynamodb.toDynamoDBJson({{$.FieldSource.NormaliseVTL (print "$context.source." $.FieldSource.Name)}})
         }
 {{- else }}
         "expression": "{{$.FieldForeign}} = :v AND {{$.AdditionalFieldForeign}} = :a",
         "expressionValues": {
-          ":v": $util.dynamodb.toDynamoDBJson($context.source.{{$.FieldSource}}),
-          ":a": $util.dynamodb.toDynamoDBJson($context.source.{{$.AdditionalFieldSource}})
+          ":v": $util.dynamodb.toDynamoDBJson({{$.FieldSource.NormaliseVTL (print "$context.source." $.FieldSource.Name)}})
+          ":a": $util.dynamodb.toDynamoDBJson({{$.FieldSource.NormaliseVTL (print "$context.source." $.AdditionalFieldSource.Name)}})
         }
 {{- end }}
     },

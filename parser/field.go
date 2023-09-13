@@ -111,6 +111,48 @@ func (pf *ParsedField) GoStructTag() string {
 	}
 }
 
+// NormaliseVTL generates VTL (Velocity Template Language, for AppSync) to normalise a value as per the @normalise directive.
+// The key parameter defines the variable name in VTL associated with this field, e.g. "$context.source.x"
+func (pf *ParsedField) NormaliseVTL(key string) (ret string) {
+	dir := pf.SingleDirective("normalise")
+	if dir == nil {
+		return key
+	}
+
+	ret = key
+
+	if dir.ArgBool("force_lower") {
+		ret = "$util.str.toLower(" + ret + ")"
+	}
+
+	if dir.ArgBool("trim") {
+		ret = ret + ".trim()"
+	}
+
+	return ret
+}
+
+// NormaliseGo generates Go code to normalise a value as per the @normalise directive.
+// The key parameter defines the variable name in VTL associated with this field, e.g. "object.myField"
+func (pf *ParsedField) NormaliseGo(key string) (ret string) {
+	dir := pf.SingleDirective("normalise")
+	if dir == nil {
+		return key
+	}
+
+	ret = key
+
+	if dir.ArgBool("force_lower") {
+		ret = "strings.ToLower(" + ret + ")"
+	}
+
+	if dir.ArgBool("trim") {
+		ret = "strings.TrimSpace(" + ret + ")"
+	}
+
+	return ret
+}
+
 func parseField(f *ast.FieldDefinition) *ParsedField {
 	return &ParsedField{
 		Name:        f.Name,

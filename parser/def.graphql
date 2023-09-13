@@ -66,3 +66,7 @@ directive @crud_type(
     fkey_resolver: String
     fkey_name: String
 ) on FIELD_DEFINITION
+directive @normalise(
+    force_lower: Boolean
+    trim: Boolean
+) on FIELD_DEFINITION | ARGUMENT_DEFINITION
