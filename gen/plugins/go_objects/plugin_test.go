@@ -97,6 +97,144 @@ func TestPlugin_Execute(t *testing.T) {
 	assert.Contains(t, rendered, "string")
 }
 
+func TestPlugin_Execute_Ignore(t *testing.T) {
+	plugin := &Plugin{}
+
+	schema := &parser.Schema{
+		Objects: map[string]*parser.ParsedObject{"test": &parser.ParsedObject{
+			Name:        "TestObjectName",
+			Directives:  nil,
+			Description: "Description",
+			Fields: []*parser.ParsedField{
+				{
+					Name:        "FieldName",
+					Directives:  nil,
+					Description: "F1 Desc",
+					Arguments:   nil,
+					Type: &parser.FieldType{
+						Kind:              "String",
+						Required:          true,
+						Collection:        false,
+						CollectionSubtype: nil,
+					},
+				},
+				{
+					Name: "FkeyField",
+					Directives: map[string][]*parser.ParsedDirective{
+						"go_ignore": {
+							{
+								Name:      "go_ignore",
+								Arguments: nil,
+							},
+						},
+					},
+					Description: "F1 Desc",
+					Arguments:   nil,
+					Type: &parser.FieldType{
+						Kind:              "String",
+						Required:          true,
+						Collection:        false,
+						CollectionSubtype: nil,
+					},
+				},
+			},
+			Interfaces: nil,
+		}},
+	}
+
+	output := &gen.Output{}
+
+	err := plugin.Generate(schema, output)
+	require.Nil(t, err)
+
+	files := output.GetFiles()
+
+	require.Equal(t, 1, len(files))
+
+	var file *gen.OutputFile
+	for _, f := range files {
+		file = f
+		break
+	}
+
+	rendered := file.String()
+
+	assert.True(t, len(rendered) > 300)
+	assert.Contains(t, rendered, "TestObjectName")
+	assert.Contains(t, rendered, "FieldName")
+	assert.Contains(t, rendered, "string")
+	assert.NotContains(t, rendered, "FkeyField")
+}
+
+func TestPlugin_Execute_Input_Ignore(t *testing.T) {
+	plugin := &Plugin{}
+
+	schema := &parser.Schema{
+		InputObjects: map[string]*parser.ParsedObject{"test": &parser.ParsedObject{
+			Name:        "TestObjectName",
+			Directives:  nil,
+			Description: "Description",
+			Fields: []*parser.ParsedField{
+				{
+					Name:        "FieldName",
+					Directives:  nil,
+					Description: "F1 Desc",
+					Arguments:   nil,
+					Type: &parser.FieldType{
+						Kind:              "String",
+						Required:          true,
+						Collection:        false,
+						CollectionSubtype: nil,
+					},
+				},
+				{
+					Name: "FkeyField",
+					Directives: map[string][]*parser.ParsedDirective{
+						"go_ignore": {
+							{
+								Name:      "go_ignore",
+								Arguments: nil,
+							},
+						},
+					},
+					Description: "F1 Desc",
+					Arguments:   nil,
+					Type: &parser.FieldType{
+						Kind:              "String",
+						Required:          true,
+						Collection:        false,
+						CollectionSubtype: nil,
+					},
+				},
+			},
+			Interfaces: nil,
+		}},
+	}
+
+	output := &gen.Output{}
+
+	err := plugin.Generate(schema, output)
+	require.Nil(t, err)
+
+	files := output.GetFiles()
+
+	require.Equal(t, 1, len(files))
+
+	var file *gen.OutputFile
+	for _, f := range files {
+		file = f
+		break
+	}
+
+	rendered := file.String()
+
+	assert.True(t, len(rendered) > 300)
+	assert.Contains(t, rendered, "TestObjectName")
+	assert.Contains(t, rendered, "FieldName")
+	assert.Contains(t, rendered, "string")
+	assert.NotContains(t, rendered, "FkeyField")
+}
+
 func TestPlugin_Execute_Format(t *testing.T) {
 	plugin := &Plugin{}
 

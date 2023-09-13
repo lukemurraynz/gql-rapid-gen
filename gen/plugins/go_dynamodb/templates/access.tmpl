@@ -119,6 +119,9 @@ func (p *{{$.Object.NameTitle}}Impl) Get{{$.Object.NameTitle}}(ctx context.Conte
     if err != nil {
         return nil, fmt.Errorf("failed to get {{$.Object.NameTitle}} from table with id %s: %v", {{$.HashKey.NameCamel}}, err)
     }
+	if result.Item == nil {
+		return nil, nil
+	}
     ret = &{{$.Object.NameTitle}}{}
 
     err = attributevalue.UnmarshalMap(result.Item, ret)

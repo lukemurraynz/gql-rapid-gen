@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	data.InitProvidersDynamoDB()
 	lambda.Start(Handler)
 }
 

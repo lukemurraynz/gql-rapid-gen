@@ -24,7 +24,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 
 		fields := make([]*parser.ParsedField, 0, len(o.Fields))
 		for _, f := range o.Fields {
-			if o.HasDirective("go_ignore") {
+			if f.HasDirective("go_ignore") {
 				continue
 			}
 			fields = append(fields, f)
@@ -56,7 +56,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 
 		fields := make([]*parser.ParsedField, 0, len(o.Fields))
 		for _, f := range o.Fields {
-			if o.HasDirective("go_ignore") {
+			if f.HasDirective("go_ignore") {
 				continue
 			}
 			fields = append(fields, f)
