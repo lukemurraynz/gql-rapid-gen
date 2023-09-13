@@ -34,8 +34,14 @@ func parseValue(v *ast.Value) Value {
 	case ast.NullValue:
 		return &valNull{}
 	case ast.ListValue:
-		log.Fatal("ListValue currently unsupported")
-		return &valList{vals: nil}
+		if len(v.Children) == 0 {
+			return &valList{vals: nil}
+		}
+		vals := make([]Value, 0, len(v.Children))
+		for _, c := range v.Children {
+			vals = append(vals, parseValue(c.Value))
+		}
+		return &valList{vals: vals}
 	default:
 		log.Printf("unhandled parseValue type: %d %s", v.Kind, v.Raw)
 		return nil

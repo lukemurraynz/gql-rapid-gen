@@ -38,6 +38,13 @@ type fkeyData struct {
 	Index                  string
 	AdditionalFieldSource  string
 	AdditionalFieldForeign string
+	Security               *fkeySecurity
+}
+
+type fkeySecurity struct {
+	MatchField     *parser.ParsedField
+	UserClaim      string
+	OverrideGroups []string
 }
 
 type crudData struct {
@@ -195,6 +202,16 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 			if f.HasDirective("appsync_foreign_key") {
 				for _, d := range f.Directives["appsync_foreign_key"] {
 
+					var sec *fkeySecurity
+					if f.HasDirective("appsync_sensitive_data") {
+						asd := f.SingleDirective("appsync_sensitive_data")
+						sec = &fkeySecurity{
+							MatchField:     o.Field(asd.Arg("match_attribute")),
+							UserClaim:      asd.Arg("user_claim"),
+							OverrideGroups: asd.ArgListString("override_groups"),
+						}
+					}
+
 					tmpl := "foreign_key_"
 					if d.ArgBool("query_single") {
 						tmpl += "query_single"
@@ -219,6 +236,7 @@ func (p *Plugin) Generate(schema *parser.Schema, output *gen.Output) error {
 						Index:                  d.Arg("index"),
 						AdditionalFieldSource:  d.Arg("additional_field_source"),
 						AdditionalFieldForeign: d.Arg("additional_field_foreign"),
+						Security:               sec,
 					})
 					if err != nil {
 						return fmt.Errorf("failed rendering Foreign Key %s %s: %w", o.Name, f.Name, err)

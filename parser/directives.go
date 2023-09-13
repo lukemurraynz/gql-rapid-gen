@@ -5,6 +5,7 @@ package parser
 import (
 	"fmt"
 	"github.com/vektah/gqlparser/v2/ast"
+	"strings"
 )
 
 type ParsedDirective struct {
@@ -39,6 +40,15 @@ func (pd *ParsedDirective) Arg(key string) string {
 		return ""
 	}
 	return arg.Value.String()
+}
+
+func (pd *ParsedDirective) ArgListString(key string) []string {
+	arg, ok := pd.Arguments[key]
+	if !ok {
+		return nil
+	}
+	// TODO this is really ugly and we need a better way to do this on Value interface
+	return strings.Split(arg.Value.String(), ", ")
 }
 
 func (pd *ParsedDirective) ArgBool(key string) bool {

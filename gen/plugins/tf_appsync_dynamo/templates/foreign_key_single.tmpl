@@ -6,18 +6,17 @@ resource "aws_appsync_resolver" "{{$.Object.Name}}-{{$.Field.Name}}" {
   data_source = aws_appsync_datasource.{{$.Table}}.name
 
   request_template = <<EOF
-{{- if eq $.Table "user" }}
-#if($util.str.toLower($context.source.{{$.FieldSource}}) == $util.str.toLower($context.identity.claims.email) || $ctx.identity.claims["cognito:groups"].contains("Admins"))
+#if($util.isNullOrEmpty($context.source.{{$.FieldSource}}))
+    #return
+#end
+{{- if $.Security }}
+#if($util.str.toLower($context.source.{{$.Security.MatchField.Name}}) == $util.str.toLower($context.identity.claims["{{$.Security.UserClaim}}"]){{- if $.Security.OverrideGroups}} {{- range $.Security.OverrideGroups}} || $ctx.identity.claims["cognito:groups"].contains("{{.}}") {{- end}} {{- end}})
 {{- end }}
 {
     "version": "2017-02-28",
     "operation": "GetItem",
     "key": {
-{{- if and (eq $.Table "user") (eq $.FieldForeign "email") }}
-        "{{$.FieldForeign}}": $util.dynamodb.toDynamoDBJson($util.str.toLower($context.source.{{$.FieldSource}})),
-{{- else }}
         "{{$.FieldForeign}}": $util.dynamodb.toDynamoDBJson($context.source.{{$.FieldSource}}),
-{{- end }}
 {{- if $.AdditionalFieldSource }}
         "{{$.AdditionalFieldForeign}}": $util.dynamodb.toDynamoDBJson($context.source.{{$.AdditionalFieldSource}}),
 {{- end }}
@@ -26,7 +25,7 @@ resource "aws_appsync_resolver" "{{$.Object.Name}}-{{$.Field.Name}}" {
     "index": "{{$.Index}}",
 {{- end }}
 }
-{{- if eq $.Table "user" }}
+{{- if $.Security }}
 #else
   $utils.unauthorized()
 #end

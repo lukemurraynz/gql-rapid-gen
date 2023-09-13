@@ -36,7 +36,16 @@ EOF
 
   response_template = <<EOF
 #if($ctx.result.items && $ctx.result.items.size() == 1)
-    $util.toJson($ctx.result.items[0])
+    {{- if $.Security }}
+    #if($util.str.toLower($ctx.result.items[0].{{$.Security.MatchField.Name}}) == $util.str.toLower($context.identity.claims["{{$.Security.UserClaim}}"]){{- if $.Security.OverrideGroups}} {{- range $.Security.OverrideGroups}} || $ctx.identity.claims["cognito:groups"].contains("{{.}}") {{- end}} {{- end}})
+    {{- end }}
+        $util.toJson($ctx.result.items[0])
+    {{- if $.Security }}
+    #else
+        $util.unauthorized()
+        #return
+    #end
+    {{- end }}
 #elif($ctx.result.items && $ctx.result.items.size() > 1)
     $util.error("too many results returned")
     #return

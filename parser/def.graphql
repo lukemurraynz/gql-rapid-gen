@@ -42,6 +42,11 @@ directive @appsync_foreign_key(
     additional_field_source: String
     additional_field_foreign: String
 ) on FIELD_DEFINITION
+directive @appsync_sensitive_data(
+    match_attribute: String!
+    user_claim: String!
+    override_groups: [String!]
+) on FIELD_DEFINITION
 directive @appsync_lambda(
     language: String!
     path: String!
