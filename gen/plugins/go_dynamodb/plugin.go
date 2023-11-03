@@ -11,6 +11,13 @@ func (p *Plugin) Name() string {
 	return "go_dynamodb"
 }
 
+func (p *Plugin) Tags() []string {
+	return []string{
+		"go",
+		"aws",
+	}
+}
+
 func (p *Plugin) Order() int {
 	return -50
 }

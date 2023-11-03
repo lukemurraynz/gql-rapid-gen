@@ -60,6 +60,10 @@ func (o *Output) HasFile(typ string, filename string) bool {
 	return pres
 }
 
+func (o *Output) FileNames() []string {
+	return maps.Keys(o.files)
+}
+
 func (o *Output) GetFiles() map[string]*OutputFile {
 	return maps.Clone(o.files)
 }

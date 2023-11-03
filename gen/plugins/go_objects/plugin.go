@@ -15,6 +15,12 @@ func (p *Plugin) Order() int {
 	return -100
 }
 
+func (p *Plugin) Tags() []string {
+	return []string{
+		"go",
+	}
+}
+
 func init() {
 	gen.RegisterPlugin("go_objects", &Plugin{})
 }

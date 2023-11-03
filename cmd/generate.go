@@ -5,6 +5,8 @@ package cmd
 import (
 	"github.com/mjdrgn/gql-rapid-gen/gen"
 	"github.com/mjdrgn/gql-rapid-gen/parser"
+	"github.com/mjdrgn/gql-rapid-gen/state"
+	"github.com/mjdrgn/gql-rapid-gen/util"
 	"golang.org/x/exp/slices"
 	"log"
 	"os"
@@ -51,67 +53,34 @@ var generateCmd = &cobra.Command{
 			return
 		}
 
-		outputDir, err := cmd.Flags().GetString("output-dir")
-		if err != nil {
-			cmd.PrintErrln(err)
-			_ = cmd.Help()
-			return
-		}
+		var config = &state.Config{}
 
-		if outputDir == "" && !dryRun && !validate {
-			cmd.PrintErrln("Output Directory must be specified with --output-dir unless you are using --dry-run or --validate")
-			os.Exit(1)
-			return
-		} else if !dryRun && !validate {
-			// Clean up directory path and confirm access
-			outputDir, err = filepath.Abs(outputDir)
+		if util.FileExists("gql-rapid-gen.json") {
+			config, err = state.LoadConfig("gql-rapid-gen.json")
 			if err != nil {
-				cmd.PrintErrln("Output Directory is invalid")
-				os.Exit(1)
+				cmd.PrintErrln(err)
 				return
 			}
-			_, err = os.ReadDir(outputDir)
-			if err != nil {
-				cmd.PrintErrln("Output Directory cannot be accessed")
-				os.Exit(1)
-				return
-			}
-		}
-
-		enablePlugin, err := cmd.Flags().GetStringSlice("enable-plugin")
-		if err != nil {
-			cmd.PrintErrln(err)
-			_ = cmd.Help()
+		} else {
+			cmd.PrintErrln("gql-rapid-gen.json config file is missing")
 			return
 		}
 
-		disablePlugin, err := cmd.Flags().GetStringSlice("disable-plugin")
+		// Clean up directory path and confirm access
+		outputDir, err := filepath.Abs(config.OutputDirectory)
 		if err != nil {
-			cmd.PrintErrln(err)
-			_ = cmd.Help()
+			cmd.PrintErrln("Output Directory is invalid")
+			os.Exit(1)
 			return
 		}
-
-		if len(enablePlugin) > 0 && len(disablePlugin) > 0 {
-			cmd.PrintErrln("You cannot use both --enable-plugin and --disable-plugin at the same time")
+		_, err = os.ReadDir(outputDir)
+		if err != nil {
+			cmd.PrintErrln("Output Directory cannot be accessed")
 			os.Exit(1)
 			return
 		}
 
-		schemaFiles, err := cmd.Flags().GetStringArray("schema")
-		if err != nil {
-			cmd.PrintErrln(err)
-			_ = cmd.Help()
-			return
-		}
-
-		if len(schemaFiles) == 0 {
-			cmd.PrintErrln("At least one schema file must be specified")
-			os.Exit(1)
-			return
-		}
-
-		schema, err := parser.Parse(schemaFiles)
+		schema, err := parser.Parse(config.SchemaFiles)
 		if err != nil {
 			cmd.PrintErrf("Failed to parse schema: %s\n", err)
 			os.Exit(2)
@@ -136,35 +105,58 @@ var generateCmd = &cobra.Command{
 			return
 		}
 
+		taggedPlugins := make([]gen.Plugin, 0, len(plugins))
+
+		// Filter by tags, if required
+		if len(config.TagEnable) > 0 {
+			for _, p := range plugins {
+				enable := true
+				for _, t := range p.Tags() {
+					if !slices.Contains(config.TagEnable, t) {
+						enable = false
+						break
+					}
+				}
+				if enable {
+					taggedPlugins = append(taggedPlugins, p)
+				}
+			}
+		} else {
+			taggedPlugins = plugins
+		}
+
 		filteredPlugins := make([]gen.Plugin, 0, len(plugins))
 
-		if len(enablePlugin) > 0 {
-			for _, p := range plugins {
-				if slices.Contains(enablePlugin, p.Name()) {
+		if len(config.PluginEnable) > 0 {
+			for _, p := range taggedPlugins {
+				if slices.Contains(config.PluginEnable, p.Name()) {
 					filteredPlugins = append(filteredPlugins, p)
 				}
 			}
-		} else if len(disablePlugin) > 0 {
-			for _, p := range plugins {
-				if !slices.Contains(disablePlugin, p.Name()) {
+		} else if len(config.PluginDisable) > 0 {
+			for _, p := range taggedPlugins {
+				if !slices.Contains(config.PluginDisable, p.Name()) {
 					filteredPlugins = append(filteredPlugins, p)
 				}
 			}
 		} else {
-			filteredPlugins = plugins
+			filteredPlugins = taggedPlugins
 		}
 
 		if len(filteredPlugins) == 0 {
-			if len(enablePlugin) > 0 {
-				cmd.Println("No available plugins within enabled list")
-			} else {
-				cmd.Println("No available plugins are removing disabled")
-			}
+			cmd.Println("No plugins able to run")
 			return
 		}
 
 		for _, p := range filteredPlugins {
 			log.Printf("Using plugin: %s", p.Name())
+		}
+
+		lock := &state.LockFile{
+			Plugins: make([]string, 0, len(filteredPlugins)),
+		}
+		for _, p := range filteredPlugins {
+			lock.Plugins = append(lock.Plugins, p.Name())
 		}
 
 		output := &gen.Output{}
@@ -191,6 +183,8 @@ var generateCmd = &cobra.Command{
 			return
 		}
 
+		lock.Files = output.FileNames()
+
 		err = gen.WriteSkeleton(outputDir)
 		if err != nil {
 			cmd.PrintErrln(err)
@@ -205,6 +199,20 @@ var generateCmd = &cobra.Command{
 			return
 		}
 
+		err = config.Save("gql-rapid-gen.json")
+		if err != nil {
+			cmd.PrintErrln(err)
+			os.Exit(6)
+			return
+		}
+
+		err = lock.Save("gql-rapid-gen.lock.json")
+		if err != nil {
+			cmd.PrintErrln(err)
+			os.Exit(7)
+			return
+		}
+
 		cmd.Println("Generation Successful")
 		return
 	},
@@ -216,14 +224,5 @@ func init() {
 	generateCmd.PersistentFlags().Bool("validate", false, "Validate input only (do not output files)")
 	generateCmd.PersistentFlags().Bool("dry-run", false, "Dry run only (do not output files)")
 	generateCmd.PersistentFlags().Bool("list", false, "Output list of plugins and exit")
-
-	generateCmd.PersistentFlags().String("output-dir", "", "Output Directory")
-	_ = generateCmd.MarkFlagDirname("output-dir")
-
-	generateCmd.PersistentFlags().StringSlice("enable-plugin", nil, "Plugins to enable - if specified, all other plugins will be disabled")
-	generateCmd.PersistentFlags().StringSlice("disable-plugin", nil, "Plugins to disable. Conflicts with enable-plugin.")
-
-	generateCmd.PersistentFlags().StringArray("schema", nil, "Schema file to load (can be specified multiple times)")
-	_ = generateCmd.MarkFlagFilename("schema", "graphql")
 
 }

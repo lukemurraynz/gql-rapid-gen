@@ -15,6 +15,12 @@ func (p *Plugin) Order() int {
 	return 0
 }
 
+func (p *Plugin) Tags() []string {
+	return []string{
+		"go",
+	}
+}
+
 func init() {
 	gen.RegisterPlugin("go_common", &Plugin{})
 }

@@ -15,6 +15,12 @@ func (p *Plugin) Order() int {
 	return 0
 }
 
+func (p *Plugin) Tags() []string {
+	return []string{
+		"aws",
+	}
+}
+
 func init() {
 	gen.RegisterPlugin("tf_appsync_dynamo", &Plugin{})
 }

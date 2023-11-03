@@ -15,6 +15,12 @@ func (p *Plugin) Order() int {
 	return -1
 }
 
+func (p *Plugin) Tags() []string {
+	return []string{
+		"aws",
+	}
+}
+
 func init() {
 	gen.RegisterPlugin("tf_dynamodb", &Plugin{})
 }
