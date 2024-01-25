@@ -2,6 +2,8 @@
 
 package main
 
+import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/aws_skel"
+
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/go_common"
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/go_dynamodb"
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/go_enum"
@@ -12,3 +14,4 @@ import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/go_objects"
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/tf_appsync_dynamo"
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/tf_appsync_lambda"
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/tf_dynamodb"
+import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/tf_skel"
