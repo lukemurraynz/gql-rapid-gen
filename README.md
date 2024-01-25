@@ -30,6 +30,9 @@ An example default config that should get most projects started is:
 ```
 See [CONFIG.md](./CONFIG.md) for more details.
 
+## Plugins & Tags
+See [PLUGINS.md](./PLUGINS.md) for a list of all plugins and tags available.
+
 ## Quick Start
 1. Create a new empty directory for your project
 2. Initialise a Git repository using git init - this guide assumes a basic knowledge of Git already
