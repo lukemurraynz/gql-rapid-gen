@@ -1,0 +1,77 @@
+directive @aws_auth on FIELD_DEFINITION
+directive @aws_api_key on FIELD_DEFINITION
+directive @aws_cognito_user_pools(
+    cognito_groups: [String]
+) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+directive @go_ignore on FIELD_DEFINITION | INPUT_FIELD_DEFINITION | OBJECT | INPUT_OBJECT
+directive @dynamodb(
+    name: String!
+    hash_key: String!
+    sort_key: String
+) on OBJECT
+directive @dynamodb_gsi(
+    name: String!
+    hash_key: String!
+    sort_key: String
+) repeatable on OBJECT
+directive @dynamodb_lsi(
+    name: String!
+    sort_key: String!
+) repeatable on OBJECT
+directive @appsync_crud(
+    create_hash_type: String # Special mode to create hash key value. uuid | timestamp
+    create_sort_type: String # Special mode to create sort key value. uuid | timestamp
+    disable_create: Boolean # Disable automatic Create handler
+    disable_read: Boolean # Disable automatic Get handler
+    disable_update: Boolean # Disable automatic Update handler
+    disable_delete: Boolean # Disable automatic Delete handler
+) on OBJECT
+directive @appsync_scan(
+    plural: String! # Plural form of object name, for query names
+) on OBJECT
+directive @appsync_list(
+    plural: String! # Plural form of object name, for query names
+    using: String # Index name to query on
+    forward: Boolean! # Whether to return results in order of sort_key - ascending if true, descending if false
+    name: String # If specified, overwrites Query name
+) on OBJECT | FIELD_DEFINITION
+directive @appsync_foreign_key(
+    query: Boolean # Run Query
+    query_single: Boolean # Run Query but return a single item
+    batch: Boolean # If true, the source fields contain an array or set of target keys, so do BatchGetItem rather than Query
+    field_source: String # Field in the current table to reference
+    field_foreign: String # Field in the target table to reference
+    table: String! # Target table name
+    index: String # Index name to query on
+    additional_field_source: String # Second field in the current table to reference
+    additional_field_foreign: String # Second field in the target table to reference
+) on FIELD_DEFINITION
+directive @appsync_sensitive_data(
+    match_attribute: String!
+    user_claim: String!
+    override_groups: [String!]
+) on FIELD_DEFINITION
+directive @appsync_lambda(
+    language: String! # Backend language. go | python | nodejs
+    path: String! # Folder within api/lambda directory where function is stored
+    timeout: String # Lambda timeout in seconds
+    memory: String # Lambda memory in MB
+) on FIELD_DEFINITION
+directive @crud_type(
+    render: String # Renderer to use in display / grids / etc. datetime | date | time | currency | fkey | cms_image | phone | markdown
+    input: String # Renderer to use for input boxes. select | cms_image | datetime | date | time | multiselect | markdown | currency | phone
+    non_empty: Boolean # Whether to allow the zero-value (empty string, 0, etc)
+    default: String # Default value on Create
+    help_text: String # Text to display to admin in forms
+    validation_regex: String # Regex for validation before save
+    min: Int # For integer types, minimum value
+    max: Int # For integer types, maximum value
+    readonly: Boolean # Force this attribute to be readonly in the backend - primary hash_key and sort_key are always readonly
+    fkey_resolver: String
+    fkey_name: String
+) on FIELD_DEFINITION
+directive @normalise(
+    force_lower: Boolean
+    trim: Boolean
+) on FIELD_DEFINITION | ARGUMENT_DEFINITION

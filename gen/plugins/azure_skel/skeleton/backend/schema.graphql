@@ -1,0 +1,30 @@
+type Query {
+    # User
+    listAllUsers(limit: Int, nextToken: String): UserCollection!
+    getUser(id: ID!): User
+    listUsersByEmail(email: String!): UserCollection!
+    listUsersByPhoneNumber(phone_number: String!): UserCollection!
+    getMe: User
+}
+
+type Mutation {
+    # User
+    deleteUser(id: ID!): String
+}
+
+type User
+    @dynamodb(name: "user", hash_key: "id")
+    @dynamodb_gsi(name: "email", hash_key: "email")
+    @dynamodb_gsi(name: "phone_number", hash_key: "phone_number")
+    @appsync_crud(disable_create: true, disable_update: true)
+    @appsync_scan(plural: "Users")
+{
+    id: ID! @normalise(force_lower: true, trim: true)
+    email: String @appsync_list(plural: "Users", forward: true, using: "email") @normalise(force_lower: true, trim: true)
+    phone_number: String @appsync_list(plural: "Users", forward: true, using: "phone_number") @normalise(trim: true)
+}
+
+type UserCollection @go_ignore {
+    items: [User!]!
+    nextToken: String
+}

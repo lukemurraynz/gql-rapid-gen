@@ -3,6 +3,7 @@
 package main
 
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/aws_skel"
+import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/azure_skel" 
 
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/go_common"
 import _ "github.com/mjdrgn/gql-rapid-gen/gen/plugins/go_dynamodb"
